@@ -182,10 +182,19 @@ export default function MindFlow({ onBack }: MindFlowProps) {
     setSelectedNodeId(null);
   };
 
-  // Handle saving MindFlow to Supabase and Firestore
+  // Handle saving MindFlow to Supabase and Firestore under the user
   const handleSaveFile = async () => {
     if (!fileName.trim()) {
       setMessage("Please provide a file name.");
+      return;
+    }
+
+    // Get current user UID
+    const user = supabase.auth.user(); // If you're using Supabase for authentication
+    const userId = user?.id; // Get the user ID (UID)
+
+    if (!userId) {
+      setMessage("Please sign in to save your MindFlow.");
       return;
     }
 
@@ -194,8 +203,9 @@ export default function MindFlow({ onBack }: MindFlowProps) {
       const blob = new Blob([fileContent], { type: "application/json" });
       const filePath = `mindflows/${fileName}.json`;
 
+      // Upload the file to Supabase storage
       const { error: uploadError } = await supabase.storage
-        .from("your-storage-bucket")
+        .from("mindflow")
         .upload(filePath, blob, {
           cacheControl: "3600",
           upsert: true,
@@ -207,8 +217,8 @@ export default function MindFlow({ onBack }: MindFlowProps) {
         return;
       }
 
-      // Save metadata in Firestore
-      await addDoc(collection(db, "mindflows"), {
+      // Save metadata in Firestore under the user
+      await addDoc(collection(db, "users", userId, "mindflows"), {
         fileName: fileName,
         filePath: filePath,
         createdAt: serverTimestamp(),
@@ -235,7 +245,11 @@ export default function MindFlow({ onBack }: MindFlowProps) {
           style={{ cursor: "pointer" }}
         />
         <h2 className="text-center flex-grow-1 m-0">Mind Flow</h2>
-        <Save size={30} style={{ cursor: "pointer" }} onClick={() => setIsSaving(true)} />
+        <Save
+          size={30}
+          style={{ cursor: "pointer" }}
+          onClick={() => setIsSaving(true)}
+        />
       </div>
 
       <div id="flow">
@@ -258,12 +272,22 @@ export default function MindFlow({ onBack }: MindFlowProps) {
       </div>
 
       <div
-        className={`add-node-container ${isAddModalOpen || isEditModalOpen ? "hidden" : ""}`}
+        className={`add-node-container ${
+          isAddModalOpen || isEditModalOpen ? "hidden" : ""
+        }`}
       >
-        <button onClick={addNode} className="btn">Add Node</button>
-        <button onClick={deleteNode} className="btn">Delete Node</button>
-        <button onClick={editNode} className="btn">Edit Node</button>
-        <button onClick={deleteEdge} className="btn">Delete Line</button>
+        <button onClick={addNode} className="btn">
+          Add Node
+        </button>
+        <button onClick={deleteNode} className="btn">
+          Delete Node
+        </button>
+        <button onClick={editNode} className="btn">
+          Edit Node
+        </button>
+        <button onClick={deleteEdge} className="btn">
+          Delete Line
+        </button>
       </div>
 
       {isAddModalOpen && (
@@ -299,8 +323,12 @@ export default function MindFlow({ onBack }: MindFlowProps) {
               }
             />
           </label>
-          <button onClick={handleAddSubmit} className="btn">Add</button>
-          <button onClick={() => setIsAddModalOpen(false)} className="btn">Cancel</button>
+          <button onClick={handleAddSubmit} className="btn">
+            Add
+          </button>
+          <button onClick={() => setIsAddModalOpen(false)} className="btn">
+            Cancel
+          </button>
         </div>
       )}
 
@@ -337,8 +365,12 @@ export default function MindFlow({ onBack }: MindFlowProps) {
               }
             />
           </label>
-          <button onClick={handleEditSubmit} className="btn">Save</button>
-          <button onClick={() => setIsEditModalOpen(false)} className="btn">Cancel</button>
+          <button onClick={handleEditSubmit} className="btn">
+            Save
+          </button>
+          <button onClick={() => setIsEditModalOpen(false)} className="btn">
+            Cancel
+          </button>
         </div>
       )}
 
@@ -359,8 +391,12 @@ export default function MindFlow({ onBack }: MindFlowProps) {
               placeholder="Enter file name"
             />
           </label>
-          <button onClick={handleSaveFile} className="btn">Save</button>
-          <button onClick={() => setIsSaving(false)} className="btn">Cancel</button>
+          <button onClick={handleSaveFile} className="btn">
+            Save
+          </button>
+          <button onClick={() => setIsSaving(false)} className="btn">
+            Cancel
+          </button>
         </div>
       )}
     </React.Fragment>

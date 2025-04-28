@@ -12,6 +12,8 @@ import {
   orderBy,
   limit,
   onSnapshot,
+  deleteDoc,
+  writeBatch,
 } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { format } from "date-fns";
@@ -33,6 +35,44 @@ export default function ExpNotifCal() {
   const [tasksForSelectedDate, setTasksForSelectedDate] = useState<any[]>([]);
   const [lastSeenNotifTime, setLastSeenNotifTime] = useState<Date | null>(null);
   const [latestNotifTime, setLatestNotifTime] = useState<Date | null>(null);
+
+  const clearAllNotifications = async () => {
+    try {
+      const auth = getAuth();
+      const user = auth.currentUser;
+      if (user) {
+        const db = getFirestore();
+        const batch = writeBatch(db); // Create a batch
+
+        // Delete due notifications
+        dueNotifications.forEach((note) => {
+          const docRef = doc(db, "users", user.uid, "todolist", note.id);
+          batch.delete(docRef);
+        });
+
+        // Delete overdue notifications
+        overdueNotifications.forEach((note) => {
+          const docRef = doc(db, "users", user.uid, "todolist", note.id);
+          batch.delete(docRef);
+        });
+
+        // Delete XP notifications
+        xpNotifications.forEach((note) => {
+          const docRef = doc(db, "users", user.uid, "xpHistory", note.id);
+          batch.delete(docRef);
+        });
+
+        await batch.commit(); // Commit the batch
+
+        // Update local state AFTER successful deletion
+        setDueNotifications([]);
+        setOverdueNotifications([]);
+        setXpNotifications([]);
+      }
+    } catch (error) {
+      console.error("Error clearing all notifications:", error);
+    }
+  };
 
   useEffect(() => {
     const handleStorage = () => {
@@ -81,7 +121,6 @@ export default function ExpNotifCal() {
           const now = new Date();
           const startOfToday = new Date(now);
           startOfToday.setHours(0, 0, 0, 0);
-
           const oneDayLater = new Date(now);
           oneDayLater.setDate(now.getDate() + 1);
 
@@ -89,34 +128,39 @@ export default function ExpNotifCal() {
             const todoData = doc.data();
             if (todoData.dueDate) {
               const dueDate = todoData.dueDate.toDate();
+              const taskId = doc.id; // Get the task ID
+
               if (dueDate >= startOfToday && dueDate <= oneDayLater) {
-                upcomingTasks.push({ title: todoData.title, dueDate });
+                upcomingTasks.push({
+                  id: taskId,
+                  title: todoData.title,
+                  dueDate,
+                });
                 taskDueDates.push(dueDate);
               } else if (dueDate < now) {
-                overdueTasks.push({ title: todoData.title, dueDate });
+                overdueTasks.push({
+                  id: taskId,
+                  title: todoData.title,
+                  dueDate,
+                });
                 taskDueDates.push(dueDate);
               }
             }
           });
 
-          overdueTasks.sort((a, b) => b.dueDate - a.dueDate);
           const overdueFormatted = overdueTasks.map((task) => ({
+            id: task.id, // Include ID
             title: task.title,
             date: format(task.dueDate, "MMMM d, yyyy"),
             time: format(task.dueDate, "hh:mm a"),
           }));
 
-          upcomingTasks.sort((a, b) => b.dueDate - a.dueDate);
-          const upcomingFormatted =
-            upcomingTasks.length > 0
-              ? [
-                  {
-                    title: upcomingTasks[0].title,
-                    date: format(upcomingTasks[0].dueDate, "MMMM d, yyyy"),
-                    time: format(upcomingTasks[0].dueDate, "hh:mm a"),
-                  },
-                ]
-              : [];
+          const upcomingFormatted = upcomingTasks.map((task) => ({
+            id: task.id, // Include ID
+            title: task.title,
+            date: format(task.dueDate, "MMMM d, yyyy"),
+            time: format(task.dueDate, "hh:mm a"),
+          }));
 
           setDueNotifications(upcomingFormatted);
           setOverdueNotifications(overdueFormatted);
@@ -139,6 +183,7 @@ export default function ExpNotifCal() {
             );
             const formattedTime = format(xpData.timestamp.toDate(), "hh:mm a");
             xpNotifs.push({
+              id: doc.id, // Include ID
               title: `You earned ${xpData.xpAdded} XP!`,
               date: formattedDate,
               time: formattedTime,
@@ -202,6 +247,40 @@ export default function ExpNotifCal() {
     fetchXpRealtime();
   }, []);
 
+  const deleteNotification = async (
+    type: "due" | "overdue" | "xp",
+    id: string
+  ) => {
+    try {
+      const auth = getAuth();
+      const user = auth.currentUser;
+      if (user) {
+        const db = getFirestore();
+        await deleteDoc(
+          doc(
+            db,
+            "users",
+            user.uid,
+            type === "xp" ? "xpHistory" : "todolist",
+            id
+          )
+        );
+
+        if (type === "due") {
+          setDueNotifications((prev) => prev.filter((note) => note.id !== id));
+        } else if (type === "overdue") {
+          setOverdueNotifications((prev) =>
+            prev.filter((note) => note.id !== id)
+          );
+        } else if (type === "xp") {
+          setXpNotifications((prev) => prev.filter((note) => note.id !== id));
+        }
+      }
+    } catch (error) {
+      console.error("Error deleting notification:", error);
+    }
+  };
+
   const toggleNotifFloating = () => {
     const now = new Date();
     setIsNotifFloating(!isNotifFloating);
@@ -215,9 +294,8 @@ export default function ExpNotifCal() {
     setIsNotifFloating(false);
   };
 
-  const getDateKey = (date: Date) => {
-    return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
-  };
+  const getDateKey = (date: Date) =>
+    `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
 
   const tileClassName = ({ date }: { date: Date }) => {
     return tasksDueDates.some(
@@ -235,7 +313,6 @@ export default function ExpNotifCal() {
         const db = getFirestore();
         const startOfDay = new Date(date);
         startOfDay.setHours(0, 0, 0, 0);
-
         const endOfDay = new Date(date);
         endOfDay.setHours(23, 59, 59, 999);
 
@@ -271,6 +348,7 @@ export default function ExpNotifCal() {
 
   return (
     <div className="container">
+      {/* EXP & Icons */}
       <div className="exp-container pt-5 pb-5">
         <div className="exp-content">
           <span className="level-text">Level: {level}</span>
@@ -305,6 +383,7 @@ export default function ExpNotifCal() {
         </div>
       </div>
 
+      {/* Notifications Popup */}
       {isNotifFloating && (
         <div className="floating-popup">
           <div className="popup-header">
@@ -315,11 +394,12 @@ export default function ExpNotifCal() {
             ></button>
           </div>
           <div className="todo-list">
+            {/* Due Tasks */}
             {dueNotifications.length === 0 ? (
               <p>No upcoming tasks</p>
             ) : (
-              dueNotifications.map((note, index) => (
-                <div key={index} className="todo-card">
+              dueNotifications.map((note) => (
+                <div key={note.id} className="todo-card">
                   <h5 className="task-title">
                     <FontAwesomeIcon
                       icon={faTasks}
@@ -331,16 +411,22 @@ export default function ExpNotifCal() {
                   <p className="due-date-time">
                     Due on {note.date} at {note.time}
                   </p>
+                  <button
+                    className="delete-btn"
+                    onClick={() => deleteNotification("due", note.id)}
+                  >
+                    Delete
+                  </button>
                 </div>
               ))
             )}
-          </div>
-          <div className="todo-list">
+
+            {/* Overdue Tasks */}
             {overdueNotifications.length === 0 ? (
               <p>No overdue tasks</p>
             ) : (
-              overdueNotifications.map((note, index) => (
-                <div key={index} className="todo-card">
+              overdueNotifications.map((note) => (
+                <div key={note.id} className="todo-card">
                   <h5 className="task-title">
                     <FontAwesomeIcon
                       icon={faTasks}
@@ -352,17 +438,22 @@ export default function ExpNotifCal() {
                   <p className="due-date-time">
                     Was due on {note.date} at {note.time}
                   </p>
+                  <button
+                    className="delete-btn"
+                    onClick={() => deleteNotification("overdue", note.id)}
+                  >
+                    Delete
+                  </button>
                 </div>
               ))
             )}
-          </div>
 
-          <div className="todo-list">
+            {/* XP Notifications */}
             {xpNotifications.length === 0 ? (
               <p>No XP notifications</p>
             ) : (
-              xpNotifications.map((note, index) => (
-                <div key={index} className="todo-card">
+              xpNotifications.map((note) => (
+                <div key={note.id} className="todo-card">
                   <h5 className="task-title">
                     <FontAwesomeIcon
                       icon={faTasks}
@@ -374,6 +465,12 @@ export default function ExpNotifCal() {
                   <p className="due-date-time">
                     Earned on {note.date} at {note.time}
                   </p>
+                  <button
+                    className="delete-btn"
+                    onClick={() => deleteNotification("xp", note.id)}
+                  >
+                    Delete
+                  </button>
                 </div>
               ))
             )}
@@ -381,6 +478,7 @@ export default function ExpNotifCal() {
         </div>
       )}
 
+      {/* Calendar Popup */}
       {isCalFloating && (
         <div className="floating-calendar-popup">
           <div className="popup-header">

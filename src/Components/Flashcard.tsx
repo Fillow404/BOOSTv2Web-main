@@ -17,12 +17,21 @@ import {
 
 type ActiveComponentState =
   | "flashcard"
-  | { name: "flashcardDetails"; deckId: string; deckTitle: string; deckDescription: string };
+  | {
+      name: "flashcardDetails";
+      deckId: string;
+      deckTitle: string;
+      deckDescription: string;
+    };
 
 export default function Flashcard() {
   const [user, setUser] = useState<any>(null);
   const [topics, setTopics] = useState<
-    { id: string; title: string; decks: { id: string; name: string; description: string }[] }[]
+    {
+      id: string;
+      title: string;
+      decks: { id: string; name: string; description: string }[];
+    }[]
   >([]);
   const [showAddDeckModal, setShowAddDeckModal] = useState(false);
   const [newDeckName, setNewDeckName] = useState("");
@@ -38,7 +47,10 @@ export default function Flashcard() {
 
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [currentTopic, setCurrentTopic] = useState<{ id: string; title: string } | null>(null);
+  const [currentTopic, setCurrentTopic] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
   const [editTopicTitle, setEditTopicTitle] = useState("");
 
   useEffect(() => {
@@ -54,7 +66,12 @@ export default function Flashcard() {
   }, []);
 
   const loadTopics = (uid: string) => {
-    const topicsCollectionRef = collection(firestore, "users", uid, "flashcard");
+    const topicsCollectionRef = collection(
+      firestore,
+      "users",
+      uid,
+      "flashcard"
+    );
     const q = query(topicsCollectionRef);
 
     const unsubscribeTopics = onSnapshot(q, async (querySnapshot) => {
@@ -91,7 +108,12 @@ export default function Flashcard() {
     };
 
     try {
-      const topicsCollectionRef = collection(firestore, "users", user.uid, "flashcard");
+      const topicsCollectionRef = collection(
+        firestore,
+        "users",
+        user.uid,
+        "flashcard"
+      );
       const docRef = await addDoc(topicsCollectionRef, newTopic);
       setTopics((prevTopics) => [
         ...prevTopics,
@@ -108,7 +130,13 @@ export default function Flashcard() {
     if (!editTopicTitle.trim() || !currentTopic) return;
 
     try {
-      const topicDocRef = doc(firestore, "users", user.uid, "flashcard", currentTopic.id);
+      const topicDocRef = doc(
+        firestore,
+        "users",
+        user.uid,
+        "flashcard",
+        currentTopic.id
+      );
       await updateDoc(topicDocRef, { title: editTopicTitle.trim() });
       setShowEditModal(false);
     } catch (error) {
@@ -120,7 +148,13 @@ export default function Flashcard() {
     if (!currentTopic) return;
 
     try {
-      const topicDocRef = doc(firestore, "users", user.uid, "flashcard", currentTopic.id);
+      const topicDocRef = doc(
+        firestore,
+        "users",
+        user.uid,
+        "flashcard",
+        currentTopic.id
+      );
       await deleteDoc(topicDocRef);
       setTopics((prevTopics) =>
         prevTopics.filter((topic) => topic.id !== currentTopic.id)
@@ -141,7 +175,13 @@ export default function Flashcard() {
     };
 
     try {
-      const topicDocRef = doc(firestore, "users", user.uid, "flashcard", selectedTopicId);
+      const topicDocRef = doc(
+        firestore,
+        "users",
+        user.uid,
+        "flashcard",
+        selectedTopicId
+      );
       const decksCollectionRef = collection(topicDocRef, "decks");
       const deckDocRef = await addDoc(decksCollectionRef, newDeck);
 
@@ -166,7 +206,15 @@ export default function Flashcard() {
 
   const handleDeleteDeck = async (deckId: string, topicId: string) => {
     try {
-      const deckDocRef = doc(firestore, "users", user.uid, "flashcard", topicId, "decks", deckId);
+      const deckDocRef = doc(
+        firestore,
+        "users",
+        user.uid,
+        "flashcard",
+        topicId,
+        "decks",
+        deckId
+      );
       await deleteDoc(deckDocRef);
 
       setTopics((prevTopics) =>
@@ -204,11 +252,12 @@ export default function Flashcard() {
     );
   };
 
-  const filteredTopics = topics.filter((topic) =>
-    topic.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    topic.decks.some((deck) =>
-      deck.name.toLowerCase().includes(searchQuery.toLowerCase())
-    )
+  const filteredTopics = topics.filter(
+    (topic) =>
+      topic.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      topic.decks.some((deck) =>
+        deck.name.toLowerCase().includes(searchQuery.toLowerCase())
+      )
   );
 
   return (
@@ -228,7 +277,9 @@ export default function Flashcard() {
           {filteredTopics.map((topic) => (
             <div key={topic.id} className="mt-4">
               <div className="d-flex align-items-center justify-content-between flex-wrap">
-                <h3 className="ms-3">{highlightText(topic.title, searchQuery)}</h3>
+                <h3 className="ms-3">
+                  {highlightText(topic.title, searchQuery)}
+                </h3>
                 <div className="me-3">
                   <button
                     className="btn btn-sm btn-outline-warning me-2"
@@ -364,7 +415,7 @@ export default function Flashcard() {
 
       {showAddDeckModal && (
         <div className="modal-backdrop-deck">
-          <div className="modal-content p-4 rounded-5" id="card-bg">
+          <div className="modal-content p-4 rounded-5 bg-light" id="card-bg">
             <h3>Create New Deck</h3>
             <p>A Deck is a set of flashcards.</p>
             <input
@@ -397,7 +448,7 @@ export default function Flashcard() {
 
       {showAddTopicModal && (
         <div className="modal-backdrop-topic">
-          <div className="modal-content p-4 rounded-5" id="card-bg">
+          <div className="modal-content p-4 rounded-5 bg-light" id="card-bg">
             <h3>Create New Topic</h3>
             <p>A Topic is a set of decks.</p>
             <input

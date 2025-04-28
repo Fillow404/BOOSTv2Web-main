@@ -25,7 +25,7 @@ interface Flashcard {
 
 interface FlashcardContentProps {
   onBack: () => void;
-  onDeleteDeck: (deckId: string) => void; 
+  onDeleteDeck: (deckId: string) => void;
   deckId: string;
   topicId: string;
   deckTitle: string;
@@ -56,7 +56,10 @@ export default function FlashcardContent({
     ? doc(db, `users/${user.uid}/flashcard/${topicId}/decks`, deckId)
     : null;
   const cardsCollection = user
-    ? collection(db, `users/${user.uid}/flashcard/${topicId}/decks/${deckId}/cards`)
+    ? collection(
+        db,
+        `users/${user.uid}/flashcard/${topicId}/decks/${deckId}/cards`
+      )
     : null;
 
   useEffect(() => {
@@ -79,7 +82,12 @@ export default function FlashcardContent({
   }, [cardsCollection]);
 
   const addCard = async () => {
-    if (!cardsCollection || newQuestion.trim() === "" || newAnswer.trim() === "") return;
+    if (
+      !cardsCollection ||
+      newQuestion.trim() === "" ||
+      newAnswer.trim() === ""
+    )
+      return;
 
     const newCard = { question: newQuestion, answer: newAnswer };
     try {
@@ -101,15 +109,29 @@ export default function FlashcardContent({
   };
 
   const saveEdit = async () => {
-    if (editIndex === null || !cardsCollection || newQuestion.trim() === "" || newAnswer.trim() === "") return;
+    if (
+      editIndex === null ||
+      !cardsCollection ||
+      newQuestion.trim() === "" ||
+      newAnswer.trim() === ""
+    )
+      return;
 
     const cardId = cards[editIndex].id;
-    const cardRef = doc(db, `users/${user!.uid}/flashcard/${topicId}/decks/${deckId}/cards`, cardId);
+    const cardRef = doc(
+      db,
+      `users/${user!.uid}/flashcard/${topicId}/decks/${deckId}/cards`,
+      cardId
+    );
     try {
       await updateDoc(cardRef, { question: newQuestion, answer: newAnswer });
 
       const updatedCards = [...cards];
-      updatedCards[editIndex] = { id: cardId, question: newQuestion, answer: newAnswer };
+      updatedCards[editIndex] = {
+        id: cardId,
+        question: newQuestion,
+        answer: newAnswer,
+      };
       setCards(updatedCards);
       setEditIndex(null);
       setShowEditModal(false);
@@ -122,7 +144,11 @@ export default function FlashcardContent({
     if (!cardsCollection) return;
 
     const cardId = cards[index].id;
-    const cardRef = doc(db, `users/${user!.uid}/flashcard/${topicId}/decks/${deckId}/cards`, cardId);
+    const cardRef = doc(
+      db,
+      `users/${user!.uid}/flashcard/${topicId}/decks/${deckId}/cards`,
+      cardId
+    );
     try {
       await deleteDoc(cardRef);
       setCards(cards.filter((_, i) => i !== index));
@@ -144,17 +170,27 @@ export default function FlashcardContent({
 
   const deleteDeck = async () => {
     try {
-      const deckRef = doc(db, `users/${auth.currentUser!.uid}/flashcard/${topicId}/decks`, deckId);
+      const deckRef = doc(
+        db,
+        `users/${auth.currentUser!.uid}/flashcard/${topicId}/decks`,
+        deckId
+      );
       await deleteDoc(deckRef);
-      onDeleteDeck(deckId); 
-      onBack(); 
+      onDeleteDeck(deckId);
+      onBack();
     } catch (error) {
       console.error("Error deleting deck:", error);
     }
   };
 
   if (isStarting) {
-    return <StartFlashcards cards={cards} deckTitle={deckTitle} onExit={() => setIsStarting(false)} />;
+    return (
+      <StartFlashcards
+        cards={cards}
+        deckTitle={deckTitle}
+        onExit={() => setIsStarting(false)}
+      />
+    );
   }
 
   return (
@@ -170,8 +206,12 @@ export default function FlashcardContent({
           <div className="d-flex align-items-center gap-4 flex-wrap">
             <GoStack size="100" />
             <div>
-              <h3 className="mb-1 text-center text-md-start text-wrap">{deckName}</h3>
-              <p className="mb-2 text-muted text-center text-md-start text-wrap">by: @user</p>
+              <h3 className="mb-1 text-center text-md-start text-wrap">
+                {deckName}
+              </h3>
+              <p className="mb-2 text-muted text-center text-md-start text-wrap">
+                by: @user
+              </p>
               <div className="d-flex align-items-center gap-3 flex-wrap justify-content-center justify-content-md-start">
                 <button
                   className="btn btn-warning"
@@ -181,10 +221,6 @@ export default function FlashcardContent({
                 >
                   Start
                 </button>
-                <span className="text-primary fw-bold" style={{ cursor: "pointer" }}>
-                  <IoShareSocialSharp size="30" />
-                  Share
-                </span>
               </div>
             </div>
           </div>
@@ -199,11 +235,7 @@ export default function FlashcardContent({
         >
           Edit
         </button>
-        <button
-          id="delete-btn"
-          className="btn p-2 m-2"
-          onClick={deleteDeck}
-        >
+        <button id="delete-btn" className="btn p-2 m-2" onClick={deleteDeck}>
           Delete
         </button>
         <h3>Description:</h3>
@@ -220,8 +252,16 @@ export default function FlashcardContent({
           >
             <span className="text-break">{card.question}</span>
             <div className="d-flex gap-3">
-              <FaEdit size="20" style={{ cursor: "pointer" }} onClick={() => openEditModal(index)} />
-              <MdDeleteForever size="20" style={{ cursor: "pointer" }} onClick={() => deleteCard(index)} />
+              <FaEdit
+                size="20"
+                style={{ cursor: "pointer" }}
+                onClick={() => openEditModal(index)}
+              />
+              <MdDeleteForever
+                size="20"
+                style={{ cursor: "pointer" }}
+                onClick={() => deleteCard(index)}
+              />
             </div>
           </div>
         ))}
@@ -230,7 +270,11 @@ export default function FlashcardContent({
           style={{ cursor: "pointer" }}
           onClick={() => setShowCreateModal(true)}
         >
-          <IoIosAddCircle size="30" className="rounded-circle bg-dark" style={{ color: "#FFCE1B" }} />
+          <IoIosAddCircle
+            size="30"
+            className="rounded-circle bg-dark"
+            style={{ color: "#FFCE1B" }}
+          />
           <span className="ms-2">Create New Card</span>
         </div>
       </div>
@@ -352,7 +396,10 @@ export default function FlashcardContent({
           </Form>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowEditDeckModal(false)}>
+          <Button
+            variant="secondary"
+            onClick={() => setShowEditDeckModal(false)}
+          >
             Cancel
           </Button>
           <Button variant="primary" onClick={updateDeckDetails}>

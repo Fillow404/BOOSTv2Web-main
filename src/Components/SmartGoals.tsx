@@ -8,6 +8,8 @@ import { MdDelete } from "react-icons/md";
 import { db } from "../firebase"; // Firestore
 import { doc, setDoc } from "firebase/firestore";
 import { supabase } from "../supabase"; // Supabase Storage
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 interface SmartGoalProps {
   onBack: () => void;
@@ -18,6 +20,7 @@ type Goal = {
   textColor: string;
   bgColor: string;
   createdAt: Date;
+  completed?: boolean; // Optional property for checklist items
 };
 
 interface AddGoalModalProps {
@@ -40,18 +43,23 @@ function AddGoalModal({
   const [goal, setGoal] = useState("");
   const [textColor, setTextColor] = useState("#000000");
   const [bgColor, setBgColor] = useState("#ffffff");
+  const [timeBoundDate, setTimeBoundDate] = useState<Date | null>(null);
 
   useEffect(() => {
     if (goalToEdit) {
       setGoal(goalToEdit.goal);
       setTextColor(goalToEdit.textColor);
       setBgColor(goalToEdit.bgColor);
+      if (category === "timeBound" && goalToEdit.createdAt) {
+        setTimeBoundDate(new Date(goalToEdit.createdAt));
+      }
     } else {
       setGoal("");
       setTextColor("#000000");
       setBgColor("#ffffff");
+      setTimeBoundDate(null);
     }
-  }, [goalToEdit, isOpen]);
+  }, [goalToEdit, isOpen, category]);
 
   if (!isOpen) return null;
 
@@ -60,7 +68,8 @@ function AddGoalModal({
       goal,
       textColor,
       bgColor,
-      createdAt: new Date(),
+      createdAt:
+        category === "timeBound" && timeBoundDate ? timeBoundDate : new Date(),
     };
     if (goalToEdit) {
       onEdit(goalData);
@@ -73,17 +82,14 @@ function AddGoalModal({
   return (
     <div className="modal-overlay">
       <div className="modal-content bg-light">
-        <h2>
-          {goalToEdit
-            ? "Edit Goal"
-            : `New Goal for "${category.charAt(0).toUpperCase() + category.slice(1)}"`}
-        </h2>
+        <h2>{goalToEdit ? "Edit Goal" : "Add Goal"}</h2> {/* Updated title */}
         <label>
           Goal:
           <input
             type="text"
             value={goal}
             onChange={(e) => setGoal(e.target.value)}
+            disabled={category === "timeBound"} // Disable input for timeBound
           />
         </label>
         <label>
@@ -102,6 +108,17 @@ function AddGoalModal({
             onChange={(e) => setBgColor(e.target.value)}
           />
         </label>
+        {category === "timeBound" && (
+          <label>
+            Time Bound Date:
+            <DatePicker
+              selected={timeBoundDate}
+              onChange={(date) => setTimeBoundDate(date)}
+              showTimeSelect
+              dateFormat="Pp"
+            />
+          </label>
+        )}
         <div className="modal-buttons">
           <button className="btn" onClick={onClose}>
             Cancel
@@ -174,7 +191,9 @@ export default function SmartGoals({ onBack }: SmartGoalProps) {
   const editGoal = (category: string, updatedGoal: Goal) => {
     setGoals((prev) => ({
       ...prev,
-      [category]: prev[category].map((g) => (g === goalToEdit ? updatedGoal : g)),
+      [category]: prev[category].map((g) =>
+        g === goalToEdit ? updatedGoal : g
+      ),
     }));
     setGoalToEdit(null);
     autoSave();
@@ -195,7 +214,9 @@ export default function SmartGoals({ onBack }: SmartGoalProps) {
   };
 
   const saveGoalsToSupabaseStorage = async () => {
-    const goalsBlob = new Blob([JSON.stringify(goals)], { type: "application/json" });
+    const goalsBlob = new Blob([JSON.stringify(goals)], {
+      type: "application/json",
+    });
     const fileName = `smart-goals-backup-${Date.now()}.json`;
 
     const { data, error } = await supabase.storage
@@ -251,28 +272,57 @@ export default function SmartGoals({ onBack }: SmartGoalProps) {
                 {category.charAt(0).toUpperCase() + category.slice(1)}
               </span>
               <div className="goal-list">
-                {goals[category].map((goal, index) => (
-                  <div
-                    key={index}
-                    className="goal-item"
-                    style={{
-                      color: goal.textColor,
-                      backgroundColor: goal.bgColor,
-                    }}
-                  >
-                    {goal.goal}
-                    <FaEdit
-                      className="edit-icon"
-                      size={20}
-                      onClick={() => openModal(category, goal)}
-                    />
-                    <MdDelete
-                      className="delete-icon"
-                      size={20}
-                      onClick={() => deleteGoal(category, goal)}
-                    />
-                  </div>
-                ))}
+                {category === "relevant"
+                  ? goals[category].map((goal, index) => (
+                      <div key={index} className="goal-item checklist-item">
+                        <input
+                          type="checkbox"
+                          id={`relevant-goal-${index}`}
+                          defaultChecked={goal.completed || false}
+                          onChange={(e) => {
+                            const updatedGoals = [...goals[category]];
+                            updatedGoals[index] = {
+                              ...goal,
+                              completed: e.target.checked,
+                            };
+                            setGoals((prev) => ({
+                              ...prev,
+                              [category]: updatedGoals,
+                            }));
+                          }}
+                        />
+                        <label htmlFor={`relevant-goal-${index}`}>
+                          {goal.goal}
+                        </label>
+                      </div>
+                    ))
+                  : goals[category].map((goal, index) => (
+                      <div
+                        key={index}
+                        className="goal-item"
+                        style={{
+                          color: goal.textColor,
+                          backgroundColor: goal.bgColor,
+                        }}
+                      >
+                        <div>{goal.goal}</div>
+                        {category === "timeBound" && (
+                          <div className="time-bound-date">
+                            {new Date(goal.createdAt).toLocaleString()}
+                          </div>
+                        )}
+                        <FaEdit
+                          className="edit-icon"
+                          size={20}
+                          onClick={() => openModal(category, goal)}
+                        />
+                        <MdDelete
+                          className="delete-icon"
+                          size={20}
+                          onClick={() => deleteGoal(category, goal)}
+                        />
+                      </div>
+                    ))}
               </div>
             </div>
           )

@@ -6,7 +6,7 @@ import type { ChatCompletionMessageParam } from "openai/resources/chat/completio
 const openai = new OpenAI({
   baseURL: "https://openrouter.ai/api/v1",
   apiKey:
-    "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",
+    "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",
   dangerouslyAllowBrowser: true,
   defaultHeaders: {
     "HTTP-Referer": "https://yourwebsite.com",
