@@ -1,0 +1,95 @@
+#line-word1 {
+    width: 100% !important;
+    text-align: center !important;
+    border-bottom: 1px solid white !important;
+    line-height: 0.1em !important;
+    margin: 10px 0 20px !important;
+}
+
+#line-word2 {
+    background: transparent !important;
+    padding: 0 10px !important;
+    color: #98989A !important;
+}
+
+#bg {
+    background-image: url(/src/assets/Login-Signup_bg.svg) !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-size: cover !important;
+    height: 45rem !important;
+}
+
+#card-bg {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    border: none !important;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2),
+        0 6px 20px 0 rgba(0, 0, 0, 0.19) !important;
+}
+
+#color-text1 {
+    color: #33592A !important;
+}
+
+#color-text2 {
+    color: #305029 !important;
+}
+
+#or-line {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+}
+
+#line {
+    flex: 1 !important;
+    height: 1px !important;
+    background-color: white !important;
+}
+
+#or-text {
+    margin: 0 10px !important;
+    color: gray !important;
+}
+
+#login-btn {
+    color: white !important;
+    background-color: #64703E !important;
+    cursor: pointer !important;
+}
+
+#input-box {
+    height: 10px !important;
+    width: 10px !important;
+}
+
+#overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: rgba(0, 0, 0, 0.6) !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+}
+
+#terms-box {
+    background: white !important;
+    padding: 20px !important;
+    border-radius: 10px !important;
+    max-width: 500px !important;
+    text-align: center !important;
+}
+
+#close-btn {
+    margin-top: 15px !important;
+    padding: 8px 15px !important;
+    background-color: #305029 !important;
+    color: white !important;
+    border: none !important;
+    cursor: pointer !important;
+    border-radius: 5px !important;
+}

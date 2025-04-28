@@ -1,0 +1,148 @@
+/* Toggle Switch Styles - Cuter and Greener */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 52px;
+  height: 28px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #cfead6;
+  transition: background-color 0.4s ease;
+  border-radius: 34px;
+  box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.1);
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 22px;
+  width: 22px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: transform 0.4s ease, background-color 0.4s ease;
+  border-radius: 50%;
+}
+
+input:checked+.slider {
+  background-color: #9de5b3;
+  /* Soft green when active */
+}
+
+input:checked+.slider:before {
+  transform: translateX(24px);
+}
+
+/* Modal Fade-in Animation */
+@keyframes fadeInModal {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Modal Styling - Cuter Style */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(200, 255, 200, 0.4);
+  /* Soft greenish overlay */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeInModal 0.3s ease-out;
+  z-index: 999;
+}
+
+.modal-box {
+  background: #fafff7;
+  padding: 24px;
+  border-radius: 16px;
+  animation: fadeInModal 0.3s ease-out;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  max-width: 480px;
+  width: 90%;
+  border-top: 6px solid #7dd87d;
+}
+
+body[data-theme="dark"] .modal-box {
+  background-color: #1f2d1f;
+  color: white;
+  border-top: 6px solid #7dd87d;
+}
+
+/* General Button Styling */
+#gen-btn {
+  background-color: #b5eec5;
+  border-radius: 12px;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  border: none;
+  padding: 10px 16px;
+}
+
+#gen-btn:hover {
+  background-color: #a1e4b4;
+  transform: translateY(-2px);
+}
+
+/* Input & Textarea Styling */
+input[type="date"],
+input[type="time"],
+textarea.form-control {
+  border: 1px solid #a1e4b4;
+  border-radius: 8px;
+  background-color: #f9fff9;
+  transition: all 0.3s ease;
+}
+
+input:disabled {
+  background-color: #f1f3f1;
+}
+
+/* Modal Buttons */
+.modal-box .btn-primary {
+  background-color: #7dd87d;
+  border-color: #7dd87d;
+  border-radius: 8px;
+}
+
+.modal-box .btn-primary:hover {
+  background-color: #6bc56b;
+  border-color: #5cb85c;
+}
+
+.modal-box .btn-secondary {
+  background-color: #aab0b5;
+  border-color: #aab0b5;
+  border-radius: 8px;
+}
+
+.modal-box .btn:hover {
+  transform: scale(1.05);
+}
+
+/* Left Panel Border */
+#leftside {
+  border-right: 2px dashed #a4d4a4;
+}

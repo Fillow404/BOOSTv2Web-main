@@ -1,0 +1,193 @@
+/* Container styling */
+#pricing-container {
+    padding-top: 5rem;
+    padding-bottom: 5rem;
+    animation: floatUp 1s ease-out;
+}
+
+/* Header styling */
+#pricing-header {
+    color: #2e7d32;
+    /* Cute green */
+    font-weight: 600;
+    text-align: center;
+}
+
+/* Free Plan Styling */
+#pricing-free-plan {
+    border-radius: 1.5rem;
+    border: 2px solid #c8e6c9;
+    background: #f9fff9;
+    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+}
+
+#pricing-free-plan:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0 15px rgba(46, 125, 50, 0.2);
+}
+
+#pricing-free-title {
+    color: #388e3c;
+}
+
+#pricing-free-plan ul {
+    padding-left: 1.5rem;
+    list-style-type: "🍃 ";
+}
+
+#pricing-free-plan li {
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: #4e944f;
+}
+
+/* Monthly Plan Styling */
+#pricing-monthly-premium {
+    border-radius: 1.5rem;
+    border: 2px solid #c8e6c9;
+    background: #f9fff9;
+    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+}
+
+#pricing-monthly-premium:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0 15px rgba(46, 125, 50, 0.2);
+}
+
+#pricing-monthly-title {
+    color: #388e3c;
+}
+
+#pricing-monthly-premium ul {
+    padding-left: 1.5rem;
+    list-style-type: "🍃 ";
+}
+
+#pricing-monthly-premium li {
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: #4e944f;
+}
+
+/* Annual Plan Styling */
+#pricing-annual-premium {
+    border-radius: 1.5rem;
+    border: 2px solid #c8e6c9;
+    background: #f9fff9;
+    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+}
+
+#pricing-annual-premium:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0 15px rgba(46, 125, 50, 0.2);
+}
+
+#pricing-annual-title {
+    color: #388e3c;
+}
+
+#pricing-annual-premium ul {
+    padding-left: 1.5rem;
+    list-style-type: "🍃 ";
+}
+
+#pricing-annual-premium li {
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: #4e944f;
+}
+
+/* Button Styling */
+#pricing-button {
+    background-color: #66bb6a;
+    border-color: #66bb6a;
+    border-radius: 2rem;
+    font-weight: bold;
+    width: 100%;
+    transition: background-color 0.2s ease-in-out;
+}
+
+#pricing-button:hover {
+    background-color: #81c784;
+    border-color: #81c784;
+}
+
+/* Animation */
+@keyframes floatUp {
+    0% {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    #pricing-container {
+        padding-top: 3rem;
+        padding-bottom: 3rem;
+    }
+
+    #pricing-free-plan,
+    #pricing-monthly-premium,
+    #pricing-annual-premium {
+        margin: 0 1rem;
+    }
+}
+
+#purchase-body {
+    font-family: "Comic Sans MS", cursive, sans-serif;
+    color: #22543d;
+    font-size: 1.1rem;
+}
+
+#payment-form {
+    margin-top: 1rem;
+    display: flex;
+    flex-direction: column;
+}
+
+#payment-form label {
+    margin-top: 0.75rem;
+    font-weight: bold;
+    font-size: 0.9rem;
+    color: #2f855a;
+}
+
+#payment-form input {
+    border: 2px solid #9ae6b4;
+    border-radius: 10px;
+    padding: 10px;
+    font-size: 1rem;
+    margin-top: 0.25rem;
+    outline: none;
+}
+
+#payment-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+#payment-row>div {
+    flex: 1;
+}
+
+#confirm-btn {
+    margin-top: 1.5rem;
+    background-color: #48bb78;
+    border: none;
+    border-radius: 12px;
+    padding: 10px 20px;
+    color: white;
+    font-weight: bold;
+    transition: 0.3s ease;
+}
+
+#confirm-btn:hover {
+    background-color: #38a169;
+}

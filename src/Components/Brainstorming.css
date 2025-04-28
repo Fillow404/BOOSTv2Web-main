@@ -1,0 +1,13 @@
+#design-btn {
+    padding: 8%;
+    background-color: #F2EEEE;
+    border: transparent;
+}
+
+#design-btn:active {
+    border: 1px #3D89FB solid;
+}
+
+.bgcolor1 {
+    background-color: #F2EEEE;
+}

@@ -1,0 +1,262 @@
+/* Overflow-X Auto - Horizontal Scrolling with Smooth Transition */
+.overflow-x-auto {
+    display: flex;
+    overflow-x: auto;
+    white-space: nowrap;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding: 10px 0;
+    transition: all 0.3s ease-in-out;
+    background-color: #f4f9f4;
+    /* Light green background for scroll container */
+    border-radius: 8px;
+}
+
+.overflow-x-auto::-webkit-scrollbar {
+    height: 8px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
+}
+
+.overflow-x-auto::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+/* On Hover, show scrollbar more prominently */
+.overflow-x-auto:hover::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+/* Media Query for responsive bar width */
+@media(max-width:768px) {
+    #xpbar {
+        width: 90%;
+    }
+}
+
+/* Shadow effect for top and bottom */
+.shadow-top-bottom {
+    box-shadow:
+        0px -4px 6px -2px rgba(0, 0, 0, 0.1),
+        0px 4px 6px -2px rgba(0, 0, 0, 0.1);
+}
+
+/* Pie chart container */
+.pie-chart-container {
+    height: 300px;
+}
+
+/* Typing Animation */
+@keyframes typing {
+    0% {
+        width: 0;
+    }
+
+    100% {
+        width: 100%;
+    }
+}
+
+/* Typing Effect for Greeting Heading */
+.greeting-heading {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #2f6a4f;
+    /* Dark Green */
+    margin-bottom: 15px;
+    text-transform: capitalize;
+    overflow: hidden;
+    white-space: nowrap;
+    border-right: 4px solid #f4a300;
+    animation: typing 3s steps(30) 1s 1 normal both;
+}
+
+/* Typing Effect for Subheading */
+.subheading {
+    font-size: 1.25rem;
+    font-weight: 500;
+    color: #f4a300;
+    /* Bright Orange */
+    margin-bottom: 25px;
+    font-style: italic;
+    opacity: 0;
+    animation: fadeIn 1.5s 3.5s forwards;
+}
+
+/* Fade-in Effect for Verse */
+@keyframes fadeIn {
+    0% {
+        opacity: 0;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+.verse {
+    font-size: 1.2rem;
+    font-weight: 400;
+    color: #32a852;
+    /* Green */
+    line-height: 1.5;
+    margin-bottom: 20px;
+    padding: 0 20px;
+    font-style: italic;
+    opacity: 0;
+    animation: fadeIn 1.5s 5s forwards;
+}
+
+/* Fade-in Effect for Explanation */
+.explanation {
+    font-size: 1rem;
+    color: #f4a300;
+    /* Bright Orange */
+    line-height: 1.6;
+    font-weight: 300;
+    padding: 0 20px;
+    opacity: 0;
+    animation: fadeIn 1.5s 6.5s forwards;
+}
+
+/* Smooth Transition on Hover */
+
+/* Container for Greeting Section */
+.greeting-container {
+    text-align: center;
+    padding: 40px 20px;
+    border-radius: 8px;
+    max-width: 800px;
+    margin: 0 auto;
+    opacity: 0;
+    animation: fadeIn 2s 0.5s forwards;
+    /* Very light green background */
+}
+
+/* Fireworks Animation */
+@keyframes fireworks {
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+
+    50% {
+        transform: scale(1.5);
+        opacity: 0.5;
+    }
+
+    100% {
+        transform: scale(0);
+        opacity: 0;
+    }
+}
+
+.fireworks {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle, rgba(0, 204, 255, 0.6), rgba(255, 165, 0, 0.6));
+    border-radius: 50%;
+    animation: fireworks 1.5s ease-out infinite;
+    pointer-events: none;
+}
+
+/* Adjustments for responsive design */
+@media(max-width:768px) {
+    .greeting-container {
+        padding: 20px;
+    }
+
+    .greeting-heading {
+        font-size: 2rem;
+    }
+
+    .subheading {
+        font-size: 1rem;
+    }
+}
+
+.streak-title {
+    font-size: 1.25rem;
+
+    text-align: center;
+}
+
+.streak-count {
+    font-size: 2.5rem;
+    text-align: center;
+    animation: flameAnimation 1.5s infinite alternate;
+}
+
+.flame-emoji {
+    animation: flameAnimation 1.5s infinite alternate;
+}
+
+@keyframes flameAnimation {
+    0% {
+        color: #ff6a00;
+        text-shadow: 0 0 10px #ff6a00, 0 0 20px #ff6a00, 0 0 30px #ff6a00;
+    }
+
+    25% {
+        color: #ff9f00;
+        text-shadow: 0 0 15px #ff9f00, 0 0 25px #ff9f00, 0 0 35px #ff9f00;
+    }
+
+    50% {
+        color: #ffdb00;
+        text-shadow: 0 0 20px #ffdb00, 0 0 30px #ffdb00, 0 0 40px #ffdb00;
+    }
+
+    75% {
+        color: #ff5500;
+        text-shadow: 0 0 10px #ff5500, 0 0 15px #ff5500, 0 0 25px #ff5500;
+    }
+
+    100% {
+        color: #ff6a00;
+        text-shadow: 0 0 10px #ff6a00, 0 0 20px #ff6a00, 0 0 30px #ff6a00;
+    }
+}
+
+.mascot-container {
+    position: fixed;
+    bottom: 20px;
+    /* Adjust as needed */
+    right: 20px;
+    /* Adjust as needed */
+    cursor: pointer;
+    z-index: 1000;
+    /* Ensures it stays above other elements */
+    transition: opacity 0.5s ease, transform 0.5s ease;
+    /* Adding opacity transition for fade-out effect */
+}
+
+.mascot-image {
+    width: 90px;
+    height: auto;
+    transition: transform 0.3s ease, opacity 0.5s ease;
+    /* Added opacity transition */
+}
+
+.mascot-image:hover {
+    transform: scale(1.1);
+}
+
+.mascot-container.hidden {
+    opacity: 0;
+    /* Makes the mascot image invisible */
+    transform: scale(0);
+    /* Shrinks it to disappear */
+}
+
+.fade-out {
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}

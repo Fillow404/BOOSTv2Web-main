@@ -1,0 +1,108 @@
+nav {
+  display: inline-flex;
+}
+
+#Logo {
+  width: auto;
+  height: 10vh;
+}
+
+.col-auto.ms-auto.d-flex.justify-content-end {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+
+.list-group-horizontal {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.list-group-horizontal .btn {
+  color: #ffffff;
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  transition: transform 0.2s ease;
+  cursor: pointer;
+  text-align: center;
+}
+
+.list-group-horizontal .btn a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Specific Styles for Each Button */
+.list-group-horizontal .btn:nth-child(1) {
+  /* Sign-up */
+  background-color: transparent;
+  color: #64703E;
+  transition: all 0.3s ease;
+  /* Smooth transition for hover effects */
+}
+
+.list-group-horizontal .btn:nth-child(1):hover {
+  color: black;
+  background-color: white;
+  transform: scale(1.1);
+  /* Slight zoom effect */
+}
+
+.list-group-horizontal .btn:nth-child(2) {
+  /* Log-in */
+  background-color: #64703E;
+  color: #ffffff;
+  border: none;
+  transition: all 0.3s ease;
+  /* Smooth transition for hover effects */
+}
+
+.list-group-horizontal .btn:nth-child(2):hover {
+  background-color: #64703E;
+  transform: scale(1.1);
+  /* Slight zoom effect */
+}
+
+/* Spacing between Buttons */
+.list-group-horizontal .btn:not(:last-child) {
+  margin-right: 0.5rem;
+}
+
+@media (max-width: 768px) {
+  .list-group-horizontal {
+    flex-direction: column;
+    align-items: flex-end;
+  }
+
+  .list-group-horizontal .btn {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+
+  .list-group-horizontal .btn:not(:last-child) {
+    margin-right: 0;
+  }
+}
+
+
+
+
+@media only screen and (max-width: 768px) {
+  #Logo {
+    width: 11vh;
+    height: auto;
+  }
+
+  #Signup {
+    font-size: 11px;
+  }
+
+  #login {
+    font-size: 12px;
+  }
+
+
+}

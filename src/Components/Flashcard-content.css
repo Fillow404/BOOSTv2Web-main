@@ -1,0 +1,105 @@
+#start-btn {
+  background-color: #72c274;
+  color: white;
+  border-radius: 12px;
+  font-weight: bold;
+  padding: 6px 16px;
+  border: none;
+  box-shadow: 0 2px 5px rgba(114, 194, 116, 0.4);
+  transition: all 0.3s ease;
+}
+
+#start-btn:hover {
+  background-color: #60a964;
+}
+
+#edit-btn,
+#delete-btn {
+  border-radius: 10px;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+
+#edit-btn {
+  background-color: #ffa94d;
+  /* orange */
+  color: white;
+}
+
+#edit-btn:hover {
+  background-color: #e68a00;
+}
+
+#delete-btn {
+  background-color: #ff6b6b;
+  color: white;
+}
+
+#delete-btn:hover {
+  background-color: #e74c3c;
+}
+
+.card {
+  background-color: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 4px 10px rgba(0, 128, 0, 0.1);
+  transition: transform 0.2s;
+}
+
+.card:hover {
+  transform: scale(1.01);
+}
+
+button.btn-primary {
+  background-color: #4caf50;
+  border: none;
+  font-weight: bold;
+}
+
+button.btn-primary:hover {
+  background-color: #3c9e40;
+}
+
+.modal-content {
+  border-radius: 18px;
+}
+
+#start-btn:disabled {
+  background-color: #c1e2c1;
+  color: #ffffff;
+  cursor: not-allowed;
+}
+
+span.text-primary {
+  color: #ff8c42 !important;
+  font-weight: bold;
+}
+
+span.text-primary:hover {
+  text-decoration: underline;
+}
+
+#create-btn {
+  background-color: #72c274;
+  border-radius: 10px;
+}
+
+#create-btn:hover {
+  background-color: #5eae60;
+}
+
+@media (max-width: 768px) {
+  .card {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .card span {
+    margin-bottom: 10px;
+  }
+
+  .container h3,
+  .container p {
+    text-align: center;
+  }
+}

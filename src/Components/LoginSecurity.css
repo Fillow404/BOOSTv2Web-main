@@ -1,0 +1,143 @@
+/* Main container styling */
+.login-security-container {
+    background: #e8f5e9;
+    border-radius: 20px;
+    padding: 2rem;
+    box-shadow: 0 8px 16px rgba(56, 142, 60, 0.2);
+    font-family: 'Poppins', sans-serif;
+    color: #2e7d32;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* Header and section titles */
+.login-security-container h5 {
+    color: #388e3c;
+    font-weight: bold;
+    margin-top: 2rem;
+    text-align: center;
+}
+
+/* Buttons */
+.login-security-button {
+    border-radius: 12px;
+    transition: all 0.3s ease-in-out;
+    font-weight: 500;
+    padding: 0.6rem 1.2rem;
+    font-size: 1rem;
+}
+
+.login-security-button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(76, 175, 80, 0.2);
+}
+
+/* Green buttons */
+.login-security-button-success {
+    background-color: #66bb6a;
+    border-color: #66bb6a;
+    color: white;
+}
+
+.login-security-button-success:hover {
+    background-color: #4caf50;
+    border-color: #4caf50;
+}
+
+/* Danger button (delete account) */
+.login-security-button-danger {
+    background-color: #ef9a9a;
+    border-color: #ef9a9a;
+    color: white;
+}
+
+.login-security-button-danger:hover {
+    background-color: #e57373;
+    border-color: #e57373;
+}
+
+/* Input fields */
+.login-security-container input {
+    border-radius: 15px;
+    border: 1px solid #c8e6c9;
+    padding: 0.8rem 1rem;
+    font-size: 1rem;
+    width: 100%;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease-in-out;
+}
+
+.login-security-container input:focus {
+    border-color: #81c784;
+    outline: none;
+    box-shadow: 0 0 10px rgba(56, 142, 60, 0.2);
+}
+
+/* Input labels */
+.login-security-container label {
+    font-weight: bold;
+    font-size: 1rem;
+    color: #388e3c;
+}
+
+/* Social login buttons */
+.social-login-button {
+    background-color: #f1f8e9 !important;
+    border-radius: 12px;
+    border: none;
+    color: #33691e;
+    transition: all 0.2s ease;
+    font-size: 1rem;
+    padding: 0.6rem 1.2rem;
+}
+
+.social-login-button:hover {
+    background-color: #dcedc8 !important;
+    box-shadow: 0 4px 8px rgba(139, 195, 74, 0.2);
+}
+
+/* Button for password visibility toggle */
+.password-toggle-btn {
+    background: none;
+    border: none;
+    color: #388e3c;
+    cursor: pointer;
+    font-size: 1.2rem;
+}
+
+/* Styling for the password container */
+.password-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+/* Floating text under inputs */
+.floating-label {
+    position: absolute;
+    top: 10px;
+    left: 12px;
+    font-size: 0.9rem;
+    color: #81c784;
+    transition: 0.3s ease-in-out;
+}
+
+.floating-label-active {
+    top: -8px;
+    left: 10px;
+    font-size: 0.8rem;
+    color: #388e3c;
+    font-weight: bold;
+}
+
+/* Media query for responsiveness */
+@media (max-width: 600px) {
+    .login-security-container {
+        padding: 1.5rem;
+    }
+
+    .login-security-button {
+        font-size: 0.9rem;
+        padding: 0.5rem 1rem;
+    }
+}

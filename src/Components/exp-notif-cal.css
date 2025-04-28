@@ -1,0 +1,386 @@
+.exp-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.exp-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-grow: 1;
+}
+
+.level-text,
+.xp-text {
+  font-size: 14px;
+  color: #666;
+}
+
+/* Progress Bar with Animation */
+@keyframes progressBarAnimation {
+  0% {
+    width: 0%;
+  }
+
+  100% {
+    width: 80%;
+    /* Adjust the width as per your need */
+  }
+}
+
+.exp-bar {
+  height: 8px;
+  border-radius: 5px;
+  background: #e0e0e0;
+  appearance: none;
+  width: 80%;
+  animation: progressBarAnimation 2s ease-in-out forwards;
+}
+
+.exp-bar::-webkit-progress-bar {
+  background: #e0e0e0;
+  border-radius: 5px;
+}
+
+.exp-bar::-webkit-progress-value {
+  background: #f4c542;
+  border-radius: 5px;
+}
+
+.icons {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.icon {
+  color: #4d4d4d;
+  cursor: pointer;
+}
+
+.notif {
+  position: relative;
+}
+
+.notif::after {
+  content: "";
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 7px;
+  height: 7px;
+  background: red;
+  border-radius: 50%;
+}
+
+/* Red dot notification indicator with animation */
+.notification-dot {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 8px;
+  height: 8px;
+  background-color: red;
+  border-radius: 50%;
+  animation: bounceDot 0.8s ease-in-out infinite;
+}
+
+@keyframes bounceDot {
+  0% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-5px);
+  }
+
+  100% {
+    transform: translateY(0);
+  }
+}
+
+.bell-container {
+  position: relative;
+}
+
+/* Floating popup animation */
+.floating-popup {
+  position: absolute;
+  right: 70px;
+  top: 90px;
+  background-color: #fff;
+  padding: 15px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  width: 300px;
+  max-height: 400px;
+  overflow-y: auto;
+  border-radius: 8px;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.floating-popup.closed {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+/* Popup header */
+.popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.close-btn {
+  background-color: transparent;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+/* Card for each task */
+.todo-card {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 15px;
+  margin: 10px 0;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.todo-card-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.task-name {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.due-date-time {
+  font-size: 14px;
+  color: #6c757d;
+}
+
+.notifications {
+  margin-top: 20px;
+}
+
+/* Fade-in animation for new notifications */
+.notification-item,
+.todo-card {
+  background-color: #fff8e1;
+  border-left: 4px solid #f4c542;
+  padding: 10px 15px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  opacity: 0;
+  transform: translateY(10px);
+  animation: fadeInUp 0.4s ease forwards;
+}
+
+@keyframes fadeInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.notification-item:hover {
+  background-color: #706537;
+}
+
+/* Floating calendar popup */
+.floating-calendar-popup {
+  position: absolute;
+  top: 90px;
+  right: 30px;
+  z-index: 1000;
+  background: white;
+  border: 1px solid #ddd;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+  padding: 20px;
+  width: auto;
+}
+
+.react-calendar__tile.highlight {
+  background-color: #f4c542;
+  color: white;
+}
+
+.react-calendar {
+  border: none;
+  outline: none;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.react-calendar__tile--active:enabled:hover,
+.react-calendar__tile--active:enabled:focus,
+.react-calendar__tile--active {
+  background: #ffae00 !important;
+}
+
+/* General Styles for Cards */
+.card {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  transition: all 0.3s ease-in-out;
+}
+
+
+
+.card-body {
+  padding: 1.25rem;
+}
+
+.card-title {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #333;
+}
+
+.card-subtitle {
+  font-size: 0.875rem;
+  color: #6c757d;
+}
+
+.card-text {
+  font-size: 0.95rem;
+  color: #555;
+}
+
+.card-footer {
+  text-align: right;
+  padding-top: 1rem;
+  font-size: 0.85rem;
+  color: #888;
+}
+
+.mb-3 {
+  margin-bottom: 1rem;
+}
+
+/* Layout for tasks in the calendar */
+.calendar-monthly .row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.calendar-monthly .col-md-4 {
+  flex: 1 1 calc(33.333% - 1rem);
+  max-width: calc(33.333% - 1rem);
+}
+
+.calendar-monthly .card {
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+}
+
+.calendar-monthly .card-body {
+  padding: 1.2rem;
+}
+
+.calendar-monthly h4 {
+  margin-top: 1.5rem;
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: #333;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .calendar-monthly .col-md-4 {
+    flex: 1 1 100%;
+    max-width: 100%;
+  }
+}
+
+/* General styling for the schedule card */
+.Sched-list {
+  margin-top: 20px;
+}
+
+.Sched-card {
+  background-color: #fff8e1;
+  border-left: 4px solid #f4c542;
+  padding: 15px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  opacity: 0;
+  transform: translateY(10px);
+  animation: fadeInUp 0.4s ease forwards;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+/* Fade-in animation */
+@keyframes fadeInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Title styling */
+.Sched-title {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 5px;
+}
+
+.Sched-title .pe-2 {
+  margin-right: 5px;
+}
+
+/* Due date and time styling */
+.due-date-time {
+  font-size: 0.875rem;
+  color: #6c757d;
+  margin-bottom: 10px;
+}
+
+/* Task description styling */
+.task-description {
+  font-size: 0.95rem;
+  color: #555;
+}
+
+/* Hover effect for the schedule card */
+p {
+  font-size: 1rem;
+  color: #6c757d;
+  font-style: italic;
+}
+
+
+.daily-mission-popup {
+  background-color: #f4f4f9;
+}
+
+.popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.popup-body {
+  margin-top: 10px;
+}
+
+.close-btn {
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.daily-mission-popup h4 {
+  font-size: 1.2rem;
+  color: #4c6ef5;
+}
