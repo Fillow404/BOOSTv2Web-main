@@ -69,6 +69,41 @@
   height: 36px;
 }
 
+#specific-goal-item {
+  word-wrap: break-word;
+  white-space: normal;
+  overflow-wrap: break-word;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+/* Ensure text wraps inside measurable goal items */
+#measurable-goal-item {
+  word-wrap: break-word;
+  white-space: normal;
+  overflow-wrap: break-word;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+/* Ensure text wraps inside relevant goal items */
+#relevant-goal-item {
+  word-wrap: break-word;
+  white-space: normal;
+  overflow-wrap: break-word;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+/* Ensure text wraps inside time-bound goal items */
+#time-bound-goal-item {
+  word-wrap: break-word;
+  white-space: normal;
+  overflow-wrap: break-word;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
 .plus-btn:hover {
   background: #059669;
 }

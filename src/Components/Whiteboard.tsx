@@ -14,7 +14,7 @@ import { ExcalidrawElement } from "@excalidraw/excalidraw/element/types";
 import { AppState } from "@excalidraw/excalidraw/types";
 import { getAuth } from "firebase/auth"; // Added authentication import
 
-// Error Boundary Component
+
 class ErrorBoundary extends React.Component<
   { children: React.ReactNode },
   { hasError: boolean }

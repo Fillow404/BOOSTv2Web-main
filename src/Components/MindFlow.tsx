@@ -190,7 +190,7 @@ export default function MindFlow({ onBack }: MindFlowProps) {
     }
 
     // Get current user UID
-    const user = supabase.auth.user(); // If you're using Supabase for authentication
+    const { data: { user } } = await supabase.auth.getUser(); // If you're using Supabase for authentication
     const userId = user?.id; // Get the user ID (UID)
 
     if (!userId) {
