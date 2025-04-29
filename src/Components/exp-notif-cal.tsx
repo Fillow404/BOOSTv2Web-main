@@ -36,44 +36,6 @@ export default function ExpNotifCal() {
   const [lastSeenNotifTime, setLastSeenNotifTime] = useState<Date | null>(null);
   const [latestNotifTime, setLatestNotifTime] = useState<Date | null>(null);
 
-  const clearAllNotifications = async () => {
-    try {
-      const auth = getAuth();
-      const user = auth.currentUser;
-      if (user) {
-        const db = getFirestore();
-        const batch = writeBatch(db); // Create a batch
-
-        // Delete due notifications
-        dueNotifications.forEach((note) => {
-          const docRef = doc(db, "users", user.uid, "todolist", note.id);
-          batch.delete(docRef);
-        });
-
-        // Delete overdue notifications
-        overdueNotifications.forEach((note) => {
-          const docRef = doc(db, "users", user.uid, "todolist", note.id);
-          batch.delete(docRef);
-        });
-
-        // Delete XP notifications
-        xpNotifications.forEach((note) => {
-          const docRef = doc(db, "users", user.uid, "xpHistory", note.id);
-          batch.delete(docRef);
-        });
-
-        await batch.commit(); // Commit the batch
-
-        // Update local state AFTER successful deletion
-        setDueNotifications([]);
-        setOverdueNotifications([]);
-        setXpNotifications([]);
-      }
-    } catch (error) {
-      console.error("Error clearing all notifications:", error);
-    }
-  };
-
   useEffect(() => {
     const handleStorage = () => {
       const lastSeen = localStorage.getItem("lastSeenNotifTime");
