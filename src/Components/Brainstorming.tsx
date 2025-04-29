@@ -3,12 +3,11 @@ import { BsSearch } from "react-icons/bs";
 import SmartGoals from "./SmartGoals";
 import Mindmap from "./Whiteboard";
 import MindFlow from "./MindFlow";
-import { db } from "../firebase"; // Adjust the import path as necessary
+import { db } from "../firebase"; 
 import { collection, getDocs } from "firebase/firestore";
-import { getAuth, onAuthStateChanged } from "firebase/auth"; // Import Firebase Auth
+import { getAuth, onAuthStateChanged, User } from "firebase/auth";
 import "./Brainstorming.css";
 
-// Define the interface for a whiteboard
 interface Whiteboard {
   id: string;
   filename: string;
@@ -20,25 +19,22 @@ interface Whiteboard {
 export default function Brainstorming() {
   const [activeComponent, setActiveComponent] = useState("brainstorming");
   const [whiteboards, setWhiteboards] = useState<Whiteboard[]>([]);
-  const [user, setUser] = useState<firebase.User | null>(null); // Firebase user type
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    // Set up Firebase Authentication state listener
     const auth = getAuth();
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser); // Update user state when authentication state changes
+      setUser(currentUser); 
     });
 
-    // Clean up the listener when component unmounts
     return () => unsubscribe();
   }, []);
 
   useEffect(() => {
     if (user) {
-      // Fetch whiteboard data for the authenticated user
       const fetchWhiteboards = async () => {
         const querySnapshot = await getDocs(
-          collection(db, "users", user.uid, "whiteboards")
+          collection(db, "users", user?.uid || "", "whiteboards")
         );
         const whiteboardData = querySnapshot.docs.map((doc) => {
           const data = doc.data();
@@ -50,7 +46,7 @@ export default function Brainstorming() {
             filename: data.filename,
             title: data.title,
             url: data.url,
-            createdAt, // formatted date or "N/A"
+            createdAt, 
           };
         });
         setWhiteboards(whiteboardData);
@@ -58,7 +54,7 @@ export default function Brainstorming() {
 
       fetchWhiteboards();
     }
-  }, [user]); // Depend on user to trigger fetching whiteboards when user is set
+  }, [user]);
 
   return (
     <React.Fragment>
@@ -79,22 +75,19 @@ export default function Brainstorming() {
           </div>
           <div className="row flex gap-4 p-4 justify-content-center">
             <div
-              className="col-sm-auto card rounded-5 btn"
-              id="design-btn"
+              className="col-sm-auto card rounded-5 btn design-btn"
               onClick={() => setActiveComponent("mindmap")}
             >
               <span>Whiteboard</span>
             </div>
             <div
-              className="col-sm-auto card rounded-5 btn"
-              id="design-btn"
+              className="col-sm-auto card rounded-5 btn design-btn"
               onClick={() => setActiveComponent("smartgoals")}
             >
               <span>Smart Goals</span>
             </div>
             <div
-              className="col-sm-auto card rounded-5 btn"
-              id="design-btn"
+              className="col-sm-auto card rounded-5 btn design-btn"
               onClick={() => setActiveComponent("mindflow")}
             >
               <span>Mind Flow</span>
