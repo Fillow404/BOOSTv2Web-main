@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { IoIosArrowBack, IoIosAddCircle } from "react-icons/io";
-import { IoShareSocialSharp } from "react-icons/io5";
 import { FaEdit } from "react-icons/fa";
 import { GoStack } from "react-icons/go";
 import "./Flashcard-content.css";

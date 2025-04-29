@@ -352,7 +352,7 @@ const FcTodoList: React.FC = () => {
       >
         <div className="card p-3" style={{ width: "22rem" }}>
           <div className="d-flex align-items-center justify-content-between">
-            <span className="badge bg-success mr-auto ">{task.timeLeft}</span>
+            <span className="badge text-light bg-success mr-auto ">{task.timeLeft}</span>
             <div>
               {task.status !== "completed" && (
                 <FaEdit

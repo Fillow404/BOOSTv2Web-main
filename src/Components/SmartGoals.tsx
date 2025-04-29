@@ -65,7 +65,7 @@ function AddGoalModal({
 
   const handleSave = () => {
     const goalData: Goal = {
-      goal,
+      goal: category === "timeBound" && timeBoundDate ? timeBoundDate.toISOString() : goal,
       textColor,
       bgColor,
       createdAt:
@@ -83,15 +83,26 @@ function AddGoalModal({
     <div className="modal-overlay">
       <div className="modal-content bg-light">
         <h2>{goalToEdit ? "Edit Goal" : "Add Goal"}</h2> {/* Updated title */}
-        <label>
-          Goal:
-          <input
-            type="text"
-            value={goal}
-            onChange={(e) => setGoal(e.target.value)}
-            disabled={category === "timeBound"} // Disable input for timeBound
-          />
-        </label>
+        {category === "timeBound" ? (
+          <label>
+            Date & time:
+            <DatePicker
+              selected={timeBoundDate}
+              onChange={(date) => setTimeBoundDate(date)}
+              showTimeSelect
+              dateFormat="Pp"
+            />
+          </label>
+        ) : (
+          <label>
+            Goal:
+            <input
+              type="text"
+              value={goal}
+              onChange={(e) => setGoal(e.target.value)}
+            />
+          </label>
+        )}
         <label>
           Text Color:
           <input
@@ -108,17 +119,6 @@ function AddGoalModal({
             onChange={(e) => setBgColor(e.target.value)}
           />
         </label>
-        {category === "timeBound" && (
-          <label>
-            Time Bound Date:
-            <DatePicker
-              selected={timeBoundDate}
-              onChange={(date) => setTimeBoundDate(date)}
-              showTimeSelect
-              dateFormat="Pp"
-            />
-          </label>
-        )}
         <div className="modal-buttons">
           <button className="btn" onClick={onClose}>
             Cancel
@@ -272,57 +272,89 @@ export default function SmartGoals({ onBack }: SmartGoalProps) {
                 {category.charAt(0).toUpperCase() + category.slice(1)}
               </span>
               <div className="goal-list">
-                {category === "relevant"
-                  ? goals[category].map((goal, index) => (
-                      <div key={index} className="goal-item checklist-item">
-                        <input
-                          type="checkbox"
-                          id={`relevant-goal-${index}`}
-                          defaultChecked={goal.completed || false}
-                          onChange={(e) => {
-                            const updatedGoals = [...goals[category]];
-                            updatedGoals[index] = {
-                              ...goal,
-                              completed: e.target.checked,
-                            };
-                            setGoals((prev) => ({
-                              ...prev,
-                              [category]: updatedGoals,
-                            }));
-                          }}
-                        />
-                        <label htmlFor={`relevant-goal-${index}`}>
-                          {goal.goal}
-                        </label>
-                      </div>
-                    ))
-                  : goals[category].map((goal, index) => (
-                      <div
-                        key={index}
-                        className="goal-item"
-                        style={{
-                          color: goal.textColor,
-                          backgroundColor: goal.bgColor,
-                        }}
-                      >
-                        <div>{goal.goal}</div>
-                        {category === "timeBound" && (
-                          <div className="time-bound-date">
-                            {new Date(goal.createdAt).toLocaleString()}
-                          </div>
-                        )}
-                        <FaEdit
-                          className="edit-icon"
-                          size={20}
-                          onClick={() => openModal(category, goal)}
-                        />
-                        <MdDelete
-                          className="delete-icon"
-                          size={20}
-                          onClick={() => deleteGoal(category, goal)}
-                        />
-                      </div>
-                    ))}
+              {category === "relevant"
+    ? goals[category].map((goal, index) => (
+        <div
+          key={index}
+          id={`relevant-goal-item-${index}`} 
+          className="goal-item checklist-item"
+        >
+          <input
+            type="checkbox"
+            id={`relevant-goal-checkbox-${index}`} 
+            defaultChecked={goal.completed || false}
+            onChange={(e) => {
+              const updatedGoals = [...goals[category]];
+              updatedGoals[index] = {
+                ...goal,
+                completed: e.target.checked,
+              };
+              setGoals((prev) => ({
+                ...prev,
+                [category]: updatedGoals,
+              }));
+            }}
+          />
+          <label
+            htmlFor={`relevant-goal-checkbox-${index}`}
+            id={`relevant-goal-label-${index}`} // Unique id for label
+          >
+            {goal.goal}
+          </label>
+          <div id={`relevant-goal-actions-${index}`} className="checklist-actions">
+            <FaEdit
+              className="edit-icon"
+              size={20}
+              onClick={() => openModal(category, goal)}
+            />
+            <MdDelete
+              className="delete-icon"
+              size={20}
+              onClick={() => deleteGoal(category, goal)}
+            />
+          </div>
+        </div>
+      ))
+    : goals[category].map((goal, index) => (
+        <div
+          key={index}
+          id={`goal-item-${category}-${index}`} // Unique id for other goal items
+          className="goal-item"
+          style={{
+            color: goal.textColor,
+            backgroundColor: goal.bgColor,
+          }}
+        >
+          <div id={`goal-text-${category}-${index}`}>{goal.goal}</div>
+          {category === "timeBound" && goal.createdAt && (
+            <div
+              id={`time-bound-date-${index}`}
+              className="time-bound-date"
+            >
+              {new Date(goal.createdAt).toLocaleString("en-US", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: true,
+              })}
+            </div>
+          )}
+          <div id={`goal-actions-${category}-${index}`}>
+            <FaEdit
+              className="edit-icon"
+              size={20}
+              onClick={() => openModal(category, goal)}
+            />
+            <MdDelete
+              className="delete-icon"
+              size={20}
+              onClick={() => deleteGoal(category, goal)}
+            />
+          </div>
+        </div>
+      ))}
               </div>
             </div>
           )

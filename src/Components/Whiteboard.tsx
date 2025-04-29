@@ -13,11 +13,8 @@ import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { ExcalidrawElement } from "@excalidraw/excalidraw/element/types";
 import { AppState } from "@excalidraw/excalidraw/types";
 import { getAuth } from "firebase/auth"; // Added authentication import
-interface MindmapProps {
-  fileContent: any; // Change `any` to a more specific type if possible
-}
 
-// Error Boundary Component
+
 class ErrorBoundary extends React.Component<
   { children: React.ReactNode },
   { hasError: boolean }
