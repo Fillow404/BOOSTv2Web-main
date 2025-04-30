@@ -60,24 +60,10 @@ const FcTodoList: React.FC = () => {
     userId: "",
     completedTime: null,
   });
-  const [_modalContent, _setModalContent] = useState<{
-    title: string;
-    description: string;
-  }>({ title: "", description: "" });
   const [dueDateError, setDueDateError] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [_xp, setXp] = useState<number>(0);
 
-  // const _updateXpInDatabase = async (newXp: number) => {
-  //   if (user) {
-  //     try {
-  //       const userRef = doc(db, "users", user.uid);
-  //       await updateDoc(userRef, { xp: newXp });
-  //     } catch (error) {
-  //       console.error("Error updating XP:", error);
-  //     }
-  //   }
-  // };
   const [showEditTaskModal, setShowEditTaskModal] = useState(false);
   const [taskToEdit, setTaskToEdit] = useState<Task | null>(null);
 
@@ -352,7 +338,9 @@ const FcTodoList: React.FC = () => {
       >
         <div className="card p-3" style={{ width: "22rem" }}>
           <div className="d-flex align-items-center justify-content-between">
-            <span className="badge text-light bg-success mr-auto ">{task.timeLeft}</span>
+            <span className="badge text-light bg-success mr-auto ">
+              {task.timeLeft}
+            </span>
             <div>
               {task.status !== "completed" && (
                 <FaEdit
@@ -483,6 +471,7 @@ const FcTodoList: React.FC = () => {
         onHide={handleAddTaskClose}
         centered
         className="add-task-modal"
+        backdrop={false}
       >
         <Modal.Header closeButton>
           <Modal.Title>Add New Task</Modal.Title>
