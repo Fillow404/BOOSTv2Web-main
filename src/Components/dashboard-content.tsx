@@ -331,7 +331,6 @@ export default function HomePage() {
         </h6>
       </div>
 
-      {/* Conditionally render the Chatbot */}
       {isChatbotVisible && <Chatbot />}
 
       <h2 className="pt-4 mx-3">Upcoming Work</h2>
@@ -341,7 +340,7 @@ export default function HomePage() {
             <div className="col-sm-auto" key={index}>
               <div
                 className="card ms-3 p-3 shadow-sm"
-                style={{ width: "22rem" }}
+                style={{ width: "100%" }}
               >
                 <div className="d-flex justify-content-between align-items-center">
                   <span className="badge bg-success">Upcoming</span>

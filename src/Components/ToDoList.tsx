@@ -19,7 +19,9 @@ import "react-datepicker/dist/react-datepicker.css";
 import { v4 as uuidv4 } from "uuid";
 import { MdDelete } from "react-icons/md";
 import { FaCalendarAlt, FaEdit } from "react-icons/fa";
-
+import { AlarmClock } from "lucide-react";
+import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
+import { BsPlusLg } from "react-icons/bs";
 interface Task {
   id: string;
   title: string;
@@ -309,6 +311,16 @@ const FcTodoList: React.FC = () => {
     return dateObj.toLocaleDateString();
   };
 
+  const formatTime = (date: Date | null | Timestamp): string => {
+    if (!date) return "";
+    const dateObj = date instanceof Timestamp ? date.toDate() : date;
+    return dateObj.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+  };
+
   const calculateTimeLeft = (dueDate: Date | null): string => {
     if (!dueDate) return "";
     const now = new Date();
@@ -336,7 +348,7 @@ const FcTodoList: React.FC = () => {
         onClick={isClickable ? () => handleTaskClick(task) : undefined}
         style={{ cursor: isClickable ? "pointer" : "default" }}
       >
-        <div className="card p-3" style={{ width: "22rem" }}>
+        <div className="card p-3 task-card-responsive taskCard">
           <div className="d-flex align-items-center justify-content-between">
             <span className="badge text-light bg-success mr-auto ">
               {task.timeLeft}
@@ -364,15 +376,42 @@ const FcTodoList: React.FC = () => {
           </div>
           <h5 className="mt-2">{task.title}</h5>
           <p className="text-muted">{task.description}</p>
-          <span className="badge bg-light text-dark text-wrap">
+          <p
+            className={`badge badge-success text-light text-start rounded border text-center  ${
+              task.priority === "Low" ? "col-md-2" : "col-md-3"
+            } ${task.priority === "Low" ? "ps-1" : "ps-2"}`}
+            style={{ backgroundColor: "#60BF9D" }}
+          >
             {task.priority}
-          </span>
+          </p>
+          <div>
+            {task.tags.map((tag, index) => (
+              <span key={index} className="badge bg-secondary me-1">
+                {tag}
+              </span>
+            ))}
+          </div>
+
           <div className="d-flex justify-content-between align-items-center mt-3 p-2 bg-light rounded">
-            <div className="d-flex align-items-center">
+            <div className="d-flex align-items-center ">
               <span>
-                <FaCalendarAlt size={20} className="me-2" />
+                <FaCalendarAlt
+                  size={25}
+                  className="me-1 p-1 rounded border shadow"
+                  color="blue"
+                  style={{ borderColor: "gray" }}
+                />
                 {formatDate(task.dueDate)}
               </span>
+            </div>
+            <div className="d-flex align-items-center ">
+              <AlarmClock
+                size={25}
+                className="me-1 p-1 rounded-circle border shadow"
+                color="orange"
+                style={{ borderColor: "gray" }}
+              />
+              {formatTime(task.dueDate)}
             </div>
           </div>
           <div className="mt-3 d-flex gap-2">
@@ -421,9 +460,11 @@ const FcTodoList: React.FC = () => {
           <svg height="2%" width="100%" className="mb-4 mt-2">
             <line x1="0" y1="10" x2="100%" y2="10" id="custom-line1" />
           </svg>
-          {tasks
-            .filter((task) => task.status === "onProgress")
-            .map(renderTaskCard)}
+          <div className="CardTask">
+            {tasks
+              .filter((task) => task.status === "onProgress")
+              .map(renderTaskCard)}
+          </div>
         </div>
         <div className="task-column">
           <span className="icons col-sm-auto">
@@ -436,9 +477,11 @@ const FcTodoList: React.FC = () => {
           <svg height="2%" width="100%" className="mb-4 mt-2">
             <line x1="0" y1="10" x2="100%" y2="10" id="custom-line2" />
           </svg>
-          {tasks
-            .filter((task) => task.status === "pending")
-            .map(renderTaskCard)}
+          <div className="CardTask">
+            {tasks
+              .filter((task) => task.status === "pending")
+              .map(renderTaskCard)}
+          </div>
         </div>
         <div className="task-column">
           <div className="row">
@@ -452,17 +495,32 @@ const FcTodoList: React.FC = () => {
           <svg height="2%" width="100%" className="mb-4 mt-2">
             <line x1="0" y1="10" x2="100%" y2="10" id="custom-line3" />
           </svg>
-          {tasks
-            .filter((task) => task.status === "completed")
-            .map(renderTaskCard)}
+          <div className="CardTask">
+            {tasks
+              .filter((task) => task.status === "completed")
+              .map(renderTaskCard)}
+          </div>
         </div>
       </div>
-      <div className="add-task-container">
+      <div
+        className="add-task-container position-fixed bottom-0 end-0 m-4"
+        style={{ zIndex: 1050 }}
+      >
         <button
-          className="add-task d-flex justify-content-center"
+          className="add-task d-flex align-items-center justify-content-center gap-2 rounded-pill shadow"
           onClick={handleAddTaskShow}
+          style={{
+            backgroundColor: "#0d6efd",
+            color: "#fff",
+            border: "none",
+            fontWeight: "bold",
+            fontSize: "0.95rem",
+            padding: "0.6rem 1.2rem",
+            cursor: "pointer",
+          }}
         >
-          + Add Task
+          <BsPlusLg size={18} />
+          <span>Add Task</span>
         </button>
       </div>
 
@@ -474,132 +532,212 @@ const FcTodoList: React.FC = () => {
         backdrop={false}
       >
         <Modal.Header closeButton>
-          <Modal.Title>Add New Task</Modal.Title>
+          <Modal.Title>Start a New Task</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Form>
-            {/* Task Title */}
             <Form.Group className="mb-3">
-              <Form.Label htmlFor="taskTitle">Title</Form.Label>
-              <Form.Control
-                type="text"
-                id="taskTitle"
-                name="title"
-                value={newTask.title}
-                onChange={handleAddTaskChange}
-                placeholder="Enter task title"
-                required
-              />
+              <div className="d-flex">
+                <Form.Label
+                  htmlFor="taskTitle"
+                  className="d-flex justify-self-center mt-3 pe-3"
+                >
+                  Title:
+                </Form.Label>
+                <Form.Control
+                  type="text"
+                  id="taskTitle"
+                  name="title"
+                  value={newTask.title}
+                  onChange={handleAddTaskChange}
+                  placeholder="Enter task title"
+                  required
+                />
+              </div>
             </Form.Group>
 
-            {/* Task Description */}
             <Form.Group className="mb-3">
-              <Form.Label htmlFor="taskDescription">Description</Form.Label>
-              <Form.Control
-                as="textarea"
-                rows={3}
-                id="taskDescription"
-                name="description"
-                value={newTask.description}
-                onChange={handleAddTaskChange}
-                placeholder="Enter task description"
-              />
+              <div className="d-flex">
+                <Form.Label htmlFor="taskDescription" className="mt-3 pe-3">
+                  Description:{" "}
+                </Form.Label>
+                <Form.Control
+                  as="textarea"
+                  rows={3}
+                  id="taskDescription"
+                  name="description"
+                  value={newTask.description}
+                  onChange={handleAddTaskChange}
+                  placeholder="Enter task description"
+                />
+              </div>
             </Form.Group>
 
             {/* Task Tags */}
             <Form.Group className="mb-3">
-              <Form.Label htmlFor="taskTags">Tags (comma-separated)</Form.Label>
-              <Form.Control
-                type="text"
-                id="taskTags"
-                name="tags"
-                value={newTask.tags.join(",")}
-                onChange={handleAddTaskChange}
-                placeholder="Enter tags"
-              />
+              <div className="d-flex">
+                <Form.Label htmlFor="taskTags" className="mt-3 pe-3">
+                  Tags:
+                </Form.Label>
+                <Form.Control
+                  type="text"
+                  id="taskTags"
+                  name="tags"
+                  value={newTask.tags.join(",")}
+                  onChange={handleAddTaskChange}
+                  placeholder="comma-separated"
+                />
+              </div>
             </Form.Group>
 
             {/* Task Due Date */}
             <Form.Group className="mb-3">
-              <Form.Label htmlFor="taskDueDate">Due Date & Time</Form.Label>
-              <DatePicker
-                id="taskDueDate"
-                selected={newTask.dueDate}
-                onChange={(date) =>
-                  setNewTask((prev) => ({ ...prev, dueDate: date }))
-                }
-                name="dueDate"
-                className="form-control"
-                showTimeSelect
-                timeIntervals={1}
-                timeCaption="Time"
-                dateFormat="MMMM d, yyyy h:mm aa"
-                minDate={new Date()}
-                placeholderText="Select due date and time"
-                autoComplete="off"
-              />
-              {dueDateError && (
-                <p className="text-danger">
-                  Due date and time cannot be in the past.
-                </p>
-              )}
+              <div className="d-flex">
+                <Form.Label htmlFor="taskDueDate" className="mt-3 pe-3">
+                  Due Date & Time:{" "}
+                </Form.Label>
+                <DatePicker
+                  id="taskDueDate"
+                  selected={newTask.dueDate}
+                  onChange={(date) =>
+                    setNewTask((prev) => ({ ...prev, dueDate: date }))
+                  }
+                  name="dueDate"
+                  className="form-control"
+                  showTimeSelect
+                  timeIntervals={1}
+                  timeCaption="Time"
+                  dateFormat="MMMM d, yyyy h:mm aa"
+                  minDate={new Date()}
+                  placeholderText="Select due date and time"
+                  autoComplete="off"
+                />
+                {dueDateError && (
+                  <p className="text-danger">
+                    Due date and time cannot be in the past.
+                  </p>
+                )}
+              </div>
             </Form.Group>
 
             {/* Task Priority */}
             <Form.Group className="mb-3">
-              <Form.Label>Priority</Form.Label>
-              <Form.Select
-                value={newTask.priority}
-                onChange={(e) =>
-                  setNewTask((prev) => ({ ...prev, priority: e.target.value }))
-                }
-              >
-                <option value="">Select Priority</option>
-                <option value="Low">Low</option>
-                <option value="Medium">Medium</option>
-                <option value="High">High</option>
-              </Form.Select>
+              <div className="d-flex">
+                <Form.Label className="mt-3 pe-3">Priority:</Form.Label>
+                <Form.Select
+                  value={newTask.priority}
+                  onChange={(e) =>
+                    setNewTask((prev) => ({
+                      ...prev,
+                      priority: e.target.value,
+                    }))
+                  }
+                >
+                  <option value="">Select Priority</option>
+                  <option value="Low">Low</option>
+                  <option value="Medium">Medium</option>
+                  <option value="High">High</option>
+                </Form.Select>
+              </div>
             </Form.Group>
 
             {/* Task Checklist */}
-            <Form.Label>Checklist</Form.Label>
-            {newTask.checklist.map((item, index) => (
-              <div key={index} className="mb-2 d-flex align-items-center">
-                <Form.Control
-                  type="text"
-                  value={item.text}
-                  onChange={(e) => {
-                    const updatedChecklist = [...newTask.checklist];
-                    updatedChecklist[index].text = e.target.value;
-                    setNewTask((prev) => ({
-                      ...prev,
-                      checklist: updatedChecklist,
-                    }));
-                  }}
-                  className="me-2"
-                />
-                <Button
-                  variant="danger"
-                  size="sm"
-                  onClick={() => {
-                    const updatedChecklist = newTask.checklist.filter(
-                      (_, i) => i !== index
-                    );
-                    setNewTask((prev) => ({
-                      ...prev,
-                      checklist: updatedChecklist,
-                    }));
-                  }}
-                >
-                  Delete
-                </Button>
-              </div>
-            ))}
+            <Form.Group className="mb-3">
+              <Form.Label className="fw-bold fs-5">Checklist</Form.Label>
+              <DragDropContext
+                onDragEnd={(result) => {
+                  if (!result.destination) return;
+
+                  const items = Array.from(newTask.checklist);
+                  const [reorderedItem] = items.splice(result.source.index, 1);
+                  items.splice(result.destination.index, 0, reorderedItem);
+
+                  setNewTask((prev) => ({
+                    ...prev,
+                    checklist: items,
+                  }));
+                }}
+              >
+                <Droppable droppableId="checklist">
+                  {(provided) => (
+                    <div ref={provided.innerRef} {...provided.droppableProps}>
+                      {newTask.checklist.map((item, index) => (
+                        <Draggable
+                          key={index}
+                          draggableId={`item-${index}`}
+                          index={index}
+                        >
+                          {(provided) => (
+                            <div
+                              className="mb-3 p-2 d-flex align-items-center justify-content-between border rounded shadow-sm"
+                              style={{ backgroundColor: "#f8f9fa" }}
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              {...provided.dragHandleProps}
+                            >
+                              <Form.Check
+                                type="checkbox"
+                                checked={item.checked}
+                                onChange={(e) => {
+                                  const updatedChecklist = [
+                                    ...newTask.checklist,
+                                  ];
+                                  updatedChecklist[index].checked =
+                                    e.target.checked;
+                                  setNewTask((prev) => ({
+                                    ...prev,
+                                    checklist: updatedChecklist,
+                                  }));
+                                }}
+                                className="me-2"
+                              />
+                              <Form.Control
+                                type="text"
+                                value={item.text}
+                                onChange={(e) => {
+                                  const updatedChecklist = [
+                                    ...newTask.checklist,
+                                  ];
+                                  updatedChecklist[index].text = e.target.value;
+                                  setNewTask((prev) => ({
+                                    ...prev,
+                                    checklist: updatedChecklist,
+                                  }));
+                                }}
+                                className="me-3 flex-grow-1"
+                                placeholder="Enter checklist item"
+                              />
+                              <Button
+                                variant="outline-danger"
+                                size="sm"
+                                onClick={() => {
+                                  const updatedChecklist =
+                                    newTask.checklist.filter(
+                                      (_, i) => i !== index
+                                    );
+                                  setNewTask((prev) => ({
+                                    ...prev,
+                                    checklist: updatedChecklist,
+                                  }));
+                                }}
+                              >
+                                Delete
+                              </Button>
+                            </div>
+                          )}
+                        </Draggable>
+                      ))}
+                      {provided.placeholder}
+                    </div>
+                  )}
+                </Droppable>
+              </DragDropContext>
+            </Form.Group>
+
             <Button variant="link" onClick={handleAddChecklist}>
               Add Checklist Item
             </Button>
 
-            {/* Error Message */}
             {error && <p className="text-danger">{error}</p>}
           </Form>
         </Modal.Body>
