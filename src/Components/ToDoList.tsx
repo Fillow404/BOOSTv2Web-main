@@ -22,6 +22,8 @@ import { FaCalendarAlt, FaEdit } from "react-icons/fa";
 import { AlarmClock } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { BsPlusLg } from "react-icons/bs";
+import { BsInfoCircle } from "react-icons/bs";
+
 interface Task {
   id: string;
   title: string;
@@ -42,6 +44,7 @@ interface Task {
 const FcTodoList: React.FC = () => {
   const [_showModal, _setShowModal] = useState(false);
   const [showAddTaskModal, setShowAddTaskModal] = useState(false);
+  const [showAddTaskModalInfo, setShowAddTaskModalInfo] = useState(false);
   const [showChecklistModal, setShowChecklistModal] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [user, setUser] = useState<import("firebase/auth").User | null>(null);
@@ -337,6 +340,33 @@ const FcTodoList: React.FC = () => {
     timeLeftString += `${minutes}m`;
     return timeLeftString;
   };
+  const motivationalMessages = [
+    "Take one step today toward your goal — even a small one matters.",
+    "Keep pushing forward — your effort is building progress.",
+    "Break your work into small, manageable steps and complete one now.",
+    "Stay focused — eliminate distractions and commit to the task at hand.",
+    "Complete one task and build momentum for the rest of your day.",
+    "Repeat small productive habits — they create long-term success.",
+    "Don’t wait — start now and build as you go.",
+    "Begin with a small win — check off a simple task first.",
+    "Take initiative — the sooner you start, the sooner you succeed.",
+    "Trust your routine and stick to it today.",
+    "Take five minutes to refocus, then return with purpose.",
+    "Finish one important task before you move to the next.",
+    "Write down your top priority and take action on it now.",
+    "Be consistent — show up for your goals even if motivation fades.",
+    "Choose progress over perfection — complete something now.",
+    "Break a big goal into a smaller action and start with that.",
+    "Use this moment to build a productive habit.",
+    "Push through resistance — the hardest part is starting.",
+    "Give yourself credit — then keep moving forward.",
+    "Visualize the result and take the next right step toward it.",
+  ];
+
+  const randomMessage =
+    motivationalMessages[
+      Math.floor(Math.random() * motivationalMessages.length)
+    ];
 
   const renderTaskCard = (task: Task) => {
     const isClickable = task.checklist && task.checklist.length > 0;
@@ -444,10 +474,84 @@ const FcTodoList: React.FC = () => {
       </div>
     );
   };
+  const handleDragEnd = (result: any) => {
+    const { source, destination } = result;
+
+    if (!destination) {
+      return;
+    }
+
+    // Reorder the checklist items
+    const reorderedChecklist = Array.from(selectedTask?.checklist || []);
+    const [removed] = reorderedChecklist.splice(source.index, 1);
+    reorderedChecklist.splice(destination.index, 0, removed);
+
+    // Update the checklist state after reordering
+    setSelectedTask((prev) =>
+      prev ? { ...prev, checklist: reorderedChecklist } : null
+    );
+
+    // Optionally, update Pangea with the new order
+  };
 
   return (
     <div>
-      <h2 className="pt-2 ps-3">To-Do List</h2>
+      <div className="d-flex justify-content-between align-items-center">
+        <h2 className="pt-2 ps-3 mb-0">To-Do List</h2>
+        <BsInfoCircle
+          size={25}
+          style={{ color: "#0d6efd", cursor: "pointer" }}
+          className="me-3"
+          onClick={() => setShowAddTaskModalInfo(true)}
+        />
+      </div>
+      <Modal
+        show={showAddTaskModalInfo}
+        onHide={() => setShowAddTaskModalInfo(false)}
+        centered
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Tips the To-Do List & How to add task</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <ol className="ps-3">
+            <li>
+              Click on the <strong>+ Add Task</strong> button at the
+              bottom-right corner to create a new task.
+            </li>
+            <li>
+              Enter a title, optional details, and checklist items for better
+              organization.
+            </li>
+            <li>
+              Use checkboxes to track your progress and mark tasks as complete.
+            </li>
+            <li>Edit or delete tasks anytime to keep your list up to date.</li>
+            <li>
+              Stay consistent — updating your list regularly boosts
+              productivity.
+            </li>
+          </ol>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            variant="secondary"
+            onClick={() => setShowAddTaskModalInfo(false)}
+          >
+            Close
+          </Button>
+        </Modal.Footer>
+      </Modal>
+      <p className="ps-3 text-muted fst-italic" style={{ fontSize: "0.95rem" }}>
+        Start by choosing one meaningful task and commit to completing it with
+        focus. Break goals into smaller actions and make steady progress,
+        prioritizing consistency over perfection. Trust the process, minimize
+        distractions, and let discipline guide your day.
+      </p>
+      <p className="ps-3 text-muted fst-italic" style={{ fontSize: "0.95rem" }}>
+        {randomMessage}
+      </p>
+
       <div className="board-container flex gap-4">
         <div className="task-column">
           <span className="icons col-sm-auto">
@@ -761,26 +865,72 @@ const FcTodoList: React.FC = () => {
           <Modal.Title>{selectedTask?.title}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          {selectedTask?.checklist.length ? (
-            selectedTask.checklist.map((item, index) => (
-              <FormCheck
-                key={index}
-                type="checkbox"
-                label={item.text}
-                checked={item.checked}
-                onChange={() => {
-                  const updatedChecklist = [...(selectedTask?.checklist || [])];
-                  updatedChecklist[index].checked =
-                    !updatedChecklist[index].checked;
-                  setSelectedTask((prev) =>
-                    prev ? { ...prev, checklist: updatedChecklist } : null
-                  );
-                }}
-              />
-            ))
-          ) : (
-            <p>No checklist items available.</p>
-          )}
+          <div className="d-flex flex-column">
+            {/* Displaying the task description */}
+            {selectedTask?.description && (
+              <div className="mb-4">
+                <p className="text-muted text-start">
+                  {selectedTask.description}
+                </p>
+              </div>
+            )}
+
+            {/* Checklist with drag-and-drop */}
+            {selectedTask?.checklist.length ? (
+              <DragDropContext onDragEnd={handleDragEnd}>
+                <Droppable droppableId="checklist" type="list">
+                  {(provided) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.droppableProps}
+                      className="checklist-container"
+                    >
+                      {selectedTask.checklist.map((item, index) => (
+                        <Draggable
+                          key={index}
+                          draggableId={`item-${index}`}
+                          index={index}
+                        >
+                          {(provided) => (
+                            <div
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              {...provided.dragHandleProps}
+                              className="checklist-item d-flex align-items-center mb-3 p-3 border border-2 rounded shadow-sm"
+                            >
+                              <FormCheck
+                                type="checkbox"
+                                label={item.text}
+                                checked={item.checked}
+                                onChange={() => {
+                                  const updatedChecklist = [
+                                    ...(selectedTask?.checklist || []),
+                                  ];
+                                  updatedChecklist[index].checked =
+                                    !updatedChecklist[index].checked;
+                                  setSelectedTask((prev) =>
+                                    prev
+                                      ? { ...prev, checklist: updatedChecklist }
+                                      : null
+                                  );
+                                }}
+                                className="me-3"
+                              />
+                            </div>
+                          )}
+                        </Draggable>
+                      ))}
+                      {provided.placeholder}
+                    </div>
+                  )}
+                </Droppable>
+              </DragDropContext>
+            ) : (
+              <p className="text-muted text-start">
+                No checklist items available.
+              </p>
+            )}
+          </div>
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={handleChecklistModalClose}>
@@ -788,6 +938,7 @@ const FcTodoList: React.FC = () => {
           </Button>
         </Modal.Footer>
       </Modal>
+
       <Modal
         show={showEditTaskModal}
         onHide={handleEditTaskClose}
@@ -800,25 +951,29 @@ const FcTodoList: React.FC = () => {
         <Modal.Body>
           {taskToEdit && (
             <Form>
-              {/* Task Title */}
               <Form.Group className="mb-3">
-                <Form.Label htmlFor="editTaskTitle">Title</Form.Label>
-                <Form.Control
-                  type="text"
-                  id="editTaskTitle"
-                  name="title"
-                  value={taskToEdit.title}
-                  onChange={(e) =>
-                    setTaskToEdit((prev) =>
-                      prev ? { ...prev, title: e.target.value } : null
-                    )
-                  }
-                  placeholder="Enter task title"
-                  required
-                />
+                <div className="d-flex">
+                  <Form.Label
+                    htmlFor="taskTitle"
+                    className="d-flex justify-self-center mt-3 pe-3"
+                  >
+                    Title:
+                  </Form.Label>
+                  <Form.Control
+                    type="text"
+                    id="editTaskTitle"
+                    value={taskToEdit.title}
+                    onChange={(e) =>
+                      setTaskToEdit((prev) =>
+                        prev ? { ...prev, title: e.target.value } : null
+                      )
+                    }
+                    placeholder="Enter task title"
+                    required
+                  />
+                </div>
               </Form.Group>
 
-              {/* Task Description */}
               <Form.Group className="mb-3">
                 <Form.Label htmlFor="editTaskDescription">
                   Description
@@ -827,7 +982,6 @@ const FcTodoList: React.FC = () => {
                   as="textarea"
                   rows={3}
                   id="editTaskDescription"
-                  name="description"
                   value={taskToEdit.description}
                   onChange={(e) =>
                     setTaskToEdit((prev) =>
@@ -845,11 +999,17 @@ const FcTodoList: React.FC = () => {
                 <Form.Control
                   type="text"
                   id="editTaskTags"
-                  name="tags"
-                  value={taskToEdit?.tags.join(",") || ""}
+                  value={taskToEdit.tags.join(",")}
                   onChange={(e) =>
                     setTaskToEdit((prev) =>
-                      prev ? { ...prev, tags: e.target.value.split(",") } : null
+                      prev
+                        ? {
+                            ...prev,
+                            tags: e.target.value
+                              .split(",")
+                              .map((tag) => tag.trim()),
+                          }
+                        : null
                     )
                   }
                   placeholder="Enter tags"
@@ -873,40 +1033,69 @@ const FcTodoList: React.FC = () => {
               </Form.Group>
 
               <Form.Label>Checklist</Form.Label>
-              {taskToEdit?.checklist.map((item, index) => (
-                <div key={index} className="mb-2 d-flex align-items-center">
-                  <Form.Control
-                    type="text"
-                    value={item.text}
-                    onChange={(e) => {
-                      const updatedChecklist = [
-                        ...(taskToEdit?.checklist || []),
-                      ];
-                      updatedChecklist[index].text = e.target.value;
-                      setTaskToEdit((prev) =>
-                        prev ? { ...prev, checklist: updatedChecklist } : null
-                      );
-                    }}
-                    className="me-2"
-                  />
-                  <Button
-                    variant="danger"
-                    size="sm"
-                    onClick={() => {
-                      const updatedChecklist = taskToEdit?.checklist.filter(
-                        (_, i) => i !== index
-                      );
-                      setTaskToEdit((prev) =>
-                        prev
-                          ? { ...prev, checklist: updatedChecklist || [] }
-                          : null
-                      );
-                    }}
-                  >
-                    Delete
-                  </Button>
-                </div>
-              ))}
+              <DragDropContext onDragEnd={handleDragEnd}>
+                <Droppable droppableId="editable-checklist">
+                  {(provided) => (
+                    <div ref={provided.innerRef} {...provided.droppableProps}>
+                      {taskToEdit.checklist.map((item, index) => (
+                        <Draggable
+                          key={`checklist-${index}`}
+                          draggableId={`checklist-${index}`}
+                          index={index}
+                        >
+                          {(provided) => (
+                            <div
+                              className="mb-2 d-flex align-items-center"
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              {...provided.dragHandleProps}
+                            >
+                              <Form.Control
+                                type="text"
+                                value={item.text}
+                                onChange={(e) => {
+                                  const updatedChecklist = [
+                                    ...(taskToEdit?.checklist || []),
+                                  ];
+                                  updatedChecklist[index].text = e.target.value;
+                                  setTaskToEdit((prev) =>
+                                    prev
+                                      ? { ...prev, checklist: updatedChecklist }
+                                      : null
+                                  );
+                                }}
+                                className="me-2"
+                              />
+                              <Button
+                                variant="danger"
+                                size="sm"
+                                onClick={() => {
+                                  const updatedChecklist =
+                                    taskToEdit?.checklist.filter(
+                                      (_, i) => i !== index
+                                    );
+                                  setTaskToEdit((prev) =>
+                                    prev
+                                      ? {
+                                          ...prev,
+                                          checklist: updatedChecklist || [],
+                                        }
+                                      : null
+                                  );
+                                }}
+                              >
+                                Delete
+                              </Button>
+                            </div>
+                          )}
+                        </Draggable>
+                      ))}
+                      {provided.placeholder}
+                    </div>
+                  )}
+                </Droppable>
+              </DragDropContext>
+
               <Button
                 variant="link"
                 onClick={() =>

@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { Button, Modal } from "react-bootstrap";
+
 import "./Flashcard.css";
 import "bootstrap/dist/css/bootstrap.min.css";
 import FlashcardDetails from "./Flashcard-content.tsx";
@@ -13,7 +15,9 @@ import {
   updateDoc,
   serverTimestamp,
   getDocs,
+  arrayUnion,
 } from "firebase/firestore";
+import { BsInfoCircle } from "react-icons/bs";
 
 type ActiveComponentState =
   | "flashcard"
@@ -30,19 +34,25 @@ export default function Flashcard() {
     {
       id: string;
       title: string;
-      decks: { id: string; name: string; description: string }[];
+      decks: {
+        createdAt: any;
+        tags: boolean;
+        id: string;
+        name: string;
+        description: string;
+      }[];
     }[]
   >([]);
   const [showAddDeckModal, setShowAddDeckModal] = useState(false);
   const [newDeckName, setNewDeckName] = useState("");
   const [newDeckDescription, setNewDeckDescription] = useState("");
   const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null);
-
+  const [openInfoModal, setOpenInfoModal] = useState(false);
   const [showAddTopicModal, setShowAddTopicModal] = useState(false);
   const [newTopicName, setNewTopicName] = useState("");
   const [activeComponent, setActiveComponent] =
     useState<ActiveComponentState>("flashcard");
-
+  const [newDeckTags, setNewDeckTags] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
 
   const [showEditModal, setShowEditModal] = useState(false);
@@ -167,11 +177,16 @@ export default function Flashcard() {
 
   const handleCreateDeck = async () => {
     if (!newDeckName.trim() || !selectedTopicId) return;
+    const tags = newDeckTags
+      .split(",")
+      .map((tag) => tag.trim())
+      .filter(Boolean);
 
     const newDeck = {
       name: newDeckName.trim(),
       description: newDeckDescription.trim(),
       createdAt: serverTimestamp(),
+      tags: tags,
     };
 
     try {
@@ -184,18 +199,6 @@ export default function Flashcard() {
       );
       const decksCollectionRef = collection(topicDocRef, "decks");
       const deckDocRef = await addDoc(decksCollectionRef, newDeck);
-
-      setTopics((prevTopics) =>
-        prevTopics.map((topic) =>
-          topic.id === selectedTopicId
-            ? {
-                ...topic,
-                decks: [...topic.decks, { id: deckDocRef.id, ...newDeck }],
-              }
-            : topic
-        )
-      );
-
       setNewDeckName("");
       setNewDeckDescription("");
       setShowAddDeckModal(false);
@@ -260,17 +263,65 @@ export default function Flashcard() {
       )
   );
 
+  const handleTagsChange = (value: string) => {
+    setNewDeckTags(value);
+  };
+
   return (
     <React.Fragment>
+      <Modal
+        show={openInfoModal}
+        onHide={() => setOpenInfoModal(false)}
+        centered
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Tips the Flashcard & How to add Flashcard</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <ol className="ps-3">
+            <li>
+              Click on the <strong>FlashCard</strong> tab or button to open the
+              flashcard module.
+            </li>
+            <li>
+              Add a new flashcard by entering a <strong>question</strong> and
+              its corresponding <strong>answer</strong>.
+            </li>
+            <li>
+              Review cards by flipping each one to test your knowledge and
+              memory.
+            </li>
+            <li>
+              Use the shuffle or randomize feature for more effective recall
+              practice.
+            </li>
+            <li>
+              Regularly update or revise your flashcards to reinforce learning
+              over time.
+            </li>
+          </ol>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setOpenInfoModal(false)}>
+            Close
+          </Button>
+        </Modal.Footer>
+      </Modal>
       {activeComponent === "flashcard" ? (
         <>
           <div className="row w-100 ps-3 pe-3">
             <input
-              className="col rounded-5 border"
+              className="col-md-11 rounded-5 border mt-3 ms-2"
               id="searchinput"
               placeholder="Search..."
               value={searchQuery}
               onChange={handleSearch}
+            />
+            <BsInfoCircle
+              size={25}
+              style={{ color: "#0d6efd", cursor: "pointer" }}
+              className="col mt-4"
+              onClick={() => setOpenInfoModal(true)}
             />
           </div>
 
@@ -302,6 +353,7 @@ export default function Flashcard() {
                   </button>
                 </div>
               </div>
+
               <div
                 id="flashcard-container"
                 className="row flex-nowrap overflow-x-auto ms-1 me-1"
@@ -329,6 +381,23 @@ export default function Flashcard() {
                     >
                       {deck.description}
                     </p>
+                    <p className="ms-2">
+                      {deck.createdAt?.toDate().toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}{" "}
+                    </p>
+
+                    {Array.isArray(deck.tags) && deck.tags.length > 0 && (
+                      <div className="ms-2 mt-2">
+                        {deck.tags.map((tag, index) => (
+                          <span key={index} className="badge bg-secondary me-1">
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ))}
 
@@ -431,6 +500,16 @@ export default function Flashcard() {
               onChange={(e) => setNewDeckDescription(e.target.value)}
               className="modal-input form-control mb-3"
             />
+            <div>
+              <label htmlFor="tagsInput">Tags (comma-separated):</label>
+              <input
+                type="text"
+                id="tagsInput"
+                value={newDeckTags} // Add state for tags
+                onChange={(e) => handleTagsChange(e.target.value)} // Add handler
+                className="modal-input form-control mb-3"
+              />
+            </div>
             <div className="modal-buttons">
               <button
                 onClick={() => setShowAddDeckModal(false)}
