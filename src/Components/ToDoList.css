@@ -262,12 +262,52 @@ progress {
   .task-card-responsive {
     width: 30vw;
   }
+
+  .task-column {
+    flex: 1 1 300px;
+    background-color: rgba(201, 200, 200, 0.185);
+    max-width: max-content;
+    padding: 20px;
+    margin: 0 auto;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    box-shadow: 0 2px 8px rgba(43, 255, 0, 0.185);
+    max-height: 100vw;
+
+  }
+
+  .CardTask {
+    max-height: 35vh;
+    max-width: 80vw;
+    overflow: auto;
+
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      border-radius: 3px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: transparent;
+      /* No background for track */
+    }
+  }
 }
 
 @media (max-width: 768px) {
   .task-card-responsive {
     width: 45vw;
   }
+
+  .task-card-responsive {
+    width: 50vw;
+    display: flex;
+    justify-self: center;
+  }
+
+
 }
 
 @media (max-width: 480px) {

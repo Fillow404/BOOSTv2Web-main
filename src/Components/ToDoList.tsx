@@ -379,7 +379,7 @@ const FcTodoList: React.FC = () => {
         style={{ cursor: isClickable ? "pointer" : "default" }}
       >
         <div className="card p-3 task-card-responsive taskCard">
-          <div className="d-flex align-items-center justify-content-between">
+          <div className="d-flex align-items-center  justify-content-between">
             <span className="badge text-light bg-success mr-auto ">
               {task.timeLeft}
             </span>

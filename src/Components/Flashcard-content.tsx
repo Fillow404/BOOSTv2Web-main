@@ -14,6 +14,7 @@ import {
   updateDoc,
   deleteDoc,
   doc,
+  getDoc,
 } from "firebase/firestore";
 
 interface Flashcard {
@@ -49,6 +50,7 @@ export default function FlashcardContent({
   const [description, setDescription] = useState(deckDescription);
   const [deckName, setDeckName] = useState(deckTitle);
   const [showEditDeckModal, setShowEditDeckModal] = useState(false);
+  const [username, setUsername] = useState<string | null>(null);
 
   const user = auth.currentUser;
   const deckRef = user
@@ -79,7 +81,24 @@ export default function FlashcardContent({
 
     fetchCards();
   }, [cardsCollection]);
+  useEffect(() => {
+    if (!user) return;
 
+    const fetchUsername = async () => {
+      try {
+        const userDocRef = doc(db, "users", user.uid);
+        const userDocSnap = await getDoc(userDocRef);
+        if (userDocSnap.exists()) {
+          const userData = userDocSnap.data();
+          setUsername(userData.username || "anonymous");
+        }
+      } catch (error) {
+        console.error("Error fetching username:", error);
+      }
+    };
+
+    fetchUsername();
+  }, [user]);
   const addCard = async () => {
     if (
       !cardsCollection ||
@@ -220,29 +239,31 @@ export default function FlashcardContent({
                 >
                   Start
                 </button>
+                <button
+                  id="edit-btn"
+                  className="btn p-2 m-2"
+                  onClick={() => setShowEditDeckModal(true)}
+                >
+                  Edit
+                </button>
+                <button
+                  id="delete-btn"
+                  className="btn p-2 m-2"
+                  onClick={deleteDeck}
+                >
+                  Delete
+                </button>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="container mt-5">
-        <button
-          id="edit-btn"
-          className="btn p-2 m-2"
-          onClick={() => setShowEditDeckModal(true)}
-        >
-          Edit
-        </button>
-        <button id="delete-btn" className="btn p-2 m-2" onClick={deleteDeck}>
-          Delete
-        </button>
-        <h3>Description:</h3>
-        <span className="ms-5 text-wrap">{description}</span>
-        <hr />
-      </div>
+      <h3 className="ms-5 text-wrap">Description:</h3>
+      <span className="ms-5 text-wrap">{description}</span>
+      <hr />
 
-      <div className="container mt-4 me-4">
+      <div className="container mt-4 me-4 ms-2">
         <h2>Cards</h2>
         {cards.map((card, index) => (
           <div

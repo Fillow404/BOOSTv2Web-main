@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Button, Modal } from "react-bootstrap";
 
 import "./Flashcard.css";
@@ -326,7 +326,7 @@ export default function Flashcard() {
           </div>
 
           {filteredTopics.map((topic) => (
-            <div key={topic.id} className="mt-4">
+            <div key={topic.id} className="mt-4 ">
               <div className="d-flex align-items-center justify-content-between flex-wrap">
                 <h3 className="ms-3">
                   {highlightText(topic.title, searchQuery)}
@@ -355,7 +355,7 @@ export default function Flashcard() {
               </div>
 
               <div
-                id="flashcard-container"
+                id="flashcard-container "
                 className="row flex-nowrap overflow-x-auto ms-1 me-1"
               >
                 {topic.decks.map((deck) => (
@@ -371,16 +371,43 @@ export default function Flashcard() {
                         deckDescription: deck.description,
                       })
                     }
+                    style={{
+                      borderTop: `60px solid ${
+                        "#" + Math.floor(Math.random() * 16777215).toString(16)
+                      }`,
+                    }}
                   >
-                    <h5 id="flashcard-title" className="m-2">
-                      {highlightText(deck.name, searchQuery)}
+                    <h5 id="flashcard-title" className="m-2 ">
+                      {highlightText(
+                        deck.name.length > 10
+                          ? `${deck.name.substring(0, 10)}...`
+                          : deck.name,
+                        searchQuery
+                      )}{" "}
                     </h5>
                     <p
                       id="flashcard-description"
                       className="text-muted small ms-3"
                     >
-                      {deck.description}
+                      {deck.description.length > 20 ? (
+                        <>
+                          {deck.description.substring(0, 20)}
+                          <br />
+                          {deck.description.substring(15, 20)}...
+                        </>
+                      ) : (
+                        deck.description
+                      )}
                     </p>
+                    {Array.isArray(deck.tags) && deck.tags.length > 0 && (
+                      <div className="ms-2">
+                        {deck.tags.map((tag, index) => (
+                          <span key={index} className="badge bg-success me-1">
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                     <p className="ms-2">
                       {deck.createdAt?.toDate().toLocaleDateString("en-US", {
                         year: "numeric",
@@ -388,16 +415,6 @@ export default function Flashcard() {
                         day: "numeric",
                       })}{" "}
                     </p>
-
-                    {Array.isArray(deck.tags) && deck.tags.length > 0 && (
-                      <div className="ms-2 mt-2">
-                        {deck.tags.map((tag, index) => (
-                          <span key={index} className="badge bg-secondary me-1">
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    )}
                   </div>
                 ))}
 
