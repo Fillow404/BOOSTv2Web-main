@@ -14,7 +14,6 @@ import {
   updateDoc,
   deleteDoc,
   doc,
-  getDoc,
 } from "firebase/firestore";
 
 interface Flashcard {
@@ -50,9 +49,10 @@ export default function FlashcardContent({
   const [description, setDescription] = useState(deckDescription);
   const [deckName, setDeckName] = useState(deckTitle);
   const [showEditDeckModal, setShowEditDeckModal] = useState(false);
-  const [username, setUsername] = useState<string | null>(null);
 
   const user = auth.currentUser;
+  const username = user?.displayName || "Anonymous";
+
   const deckRef = user
     ? doc(db, `users/${user.uid}/flashcard/${topicId}/decks`, deckId)
     : null;
@@ -81,24 +81,8 @@ export default function FlashcardContent({
 
     fetchCards();
   }, [cardsCollection]);
-  useEffect(() => {
-    if (!user) return;
+  const [showConfirm, setShowConfirm] = useState(false);
 
-    const fetchUsername = async () => {
-      try {
-        const userDocRef = doc(db, "users", user.uid);
-        const userDocSnap = await getDoc(userDocRef);
-        if (userDocSnap.exists()) {
-          const userData = userDocSnap.data();
-          setUsername(userData.username || "anonymous");
-        }
-      } catch (error) {
-        console.error("Error fetching username:", error);
-      }
-    };
-
-    fetchUsername();
-  }, [user]);
   const addCard = async () => {
     if (
       !cardsCollection ||
@@ -138,7 +122,7 @@ export default function FlashcardContent({
     const cardId = cards[editIndex].id;
     const cardRef = doc(
       db,
-      `users/${user!.uid}/flashcard/${topicId}/decks/${deckId}/cards`,
+      `users/${user?.uid}/flashcard/${topicId}/decks/${deckId}/cards`,
       cardId
     );
     try {
@@ -187,246 +171,351 @@ export default function FlashcardContent({
   };
 
   const deleteDeck = async () => {
+    if (!deckId || !topicId || !user) {
+      return;
+    }
+
     try {
       const deckRef = doc(
         db,
-        `users/${auth.currentUser!.uid}/flashcard/${topicId}/decks`,
+        `users/${user.uid}/flashcard/${topicId}/decks`,
         deckId
       );
       await deleteDoc(deckRef);
       onDeleteDeck(deckId);
       onBack();
+      console.log("Deck deleted successfully.");
     } catch (error) {
       console.error("Error deleting deck:", error);
     }
   };
 
-  if (isStarting) {
-    return (
-      <StartFlashcards
-        cards={cards}
-        deckTitle={deckTitle}
-        onExit={() => setIsStarting(false)}
-      />
-    );
-  }
-
+  const [showModal, setShowModal] = useState(false);
   return (
     <React.Fragment>
-      <div className="container d-flex align-items-center justify-content-between mt-3 flex-wrap">
-        <div className="d-flex align-items-center flex-wrap">
-          <IoIosArrowBack
-            onClick={onBack}
-            size="40"
-            className="m-2 me-4"
-            style={{ cursor: "pointer" }}
-          />
-          <div className="d-flex align-items-center gap-4 flex-wrap">
-            <GoStack size="100" />
-            <div>
-              <h3 className="mb-1 text-center text-md-start text-wrap">
-                {deckName}
-              </h3>
-              <p className="mb-2 text-muted text-center text-md-start text-wrap">
-                by: @user
-              </p>
-              <div className="d-flex align-items-center gap-3 flex-wrap justify-content-center justify-content-md-start">
-                <button
-                  className="btn btn-warning"
-                  id="start-btn"
-                  onClick={() => setIsStarting(true)}
-                  disabled={cards.length < 4}
-                >
-                  Start
-                </button>
-                <button
-                  id="edit-btn"
-                  className="btn p-2 m-2"
-                  onClick={() => setShowEditDeckModal(true)}
-                >
-                  Edit
-                </button>
-                <button
-                  id="delete-btn"
-                  className="btn p-2 m-2"
-                  onClick={deleteDeck}
-                >
-                  Delete
-                </button>
+      {isStarting ? (
+        <StartFlashcards
+          cards={cards}
+          deckTitle={deckTitle}
+          onExit={() => setIsStarting(false)}
+        />
+      ) : (
+        <>
+          <div className="container d-flex align-items-center justify-content-between mt-3 flex-wrap">
+            <div className="d-flex align-items-center flex-wrap">
+              <IoIosArrowBack
+                onClick={onBack}
+                size="40"
+                className="e-4"
+                style={{ cursor: "pointer" }}
+              />
+              <div className="d-flex align-items-center gap-4 flex-wrap">
+                <GoStack size="100" />
+                <div>
+                  <h3 className="mb-1 text-center text-md-start text-wrap">
+                    {deckName}
+                  </h3>
+                  <div className="d-flex justify-content-between align-items-center flex-wrap">
+                    <div className="text-muted mb-2 text-center text-md-start">
+                      <p className="mb-0">by: @{username ?? "loading..."}</p>
+                    </div>
+                  </div>
+                  <div className="d-flex gap-2 flex-wrap justify-content-center justify-content-md-end">
+                    <button
+                      className="btn btn-warning"
+                      id="start-btn"
+                      onClick={() => setIsStarting(true)}
+                      disabled={cards.length < 4}
+                    >
+                      {cards.length < 4
+                        ? "Please input 4 cards more to start"
+                        : "Start"}
+                    </button>
+                    <button
+                      id="edit-btn"
+                      className="btn btn-outline-secondary"
+                      onClick={() => setShowEditDeckModal(true)}
+                    >
+                      Edit
+                    </button>
+                    <>
+                      <button
+                        id="delete-btn"
+                        className="btn btn-outline-danger"
+                        onClick={() => {
+                          setShowModal(true);
+                          deleteDeck();
+                        }}
+                      >
+                        Delete
+                      </button>
+                      <Modal
+                        show={showModal}
+                        onHide={() => setShowModal(false)}
+                        centered
+                      >
+                        <Modal.Header closeButton>
+                          <Modal.Title>Confirm Deletion</Modal.Title>
+                        </Modal.Header>
+                        <Modal.Body>
+                          Are you sure you want to delete this deck?
+                        </Modal.Body>
+                        <Modal.Footer>
+                          <Button
+                            variant="secondary"
+                            onClick={() => setShowModal(false)}
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            variant="danger"
+                            onClick={() => {
+                              deleteDeck();
+                            }}
+                          >
+                            Delete
+                          </Button>
+                        </Modal.Footer>
+                      </Modal>
+                    </>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </div>
-
-      <h3 className="ms-5 text-wrap">Description:</h3>
-      <span className="ms-5 text-wrap">{description}</span>
-      <hr />
-
-      <div className="container mt-4 me-4 ms-2">
-        <h2>Cards</h2>
-        {cards.map((card, index) => (
-          <div
-            key={card.id}
-            className="card p-3 d-flex align-items-center justify-content-between flex-row mb-2 flex-wrap"
-          >
-            <span className="text-break">{card.question}</span>
-            <div className="d-flex gap-3">
-              <FaEdit
-                size="20"
-                style={{ cursor: "pointer" }}
-                onClick={() => openEditModal(index)}
+          <h3 className="ms-5 text-wrap">Description:</h3>
+          <div className="ms-5 w-50">
+            {description.match(/.{1,130}/g)?.map((line, index) => (
+              <span key={index}>
+                {line}
+                <br />
+              </span>
+            ))}
+          </div>{" "}
+          <hr />
+          <div className="container">
+            <h2>Cards</h2>
+            {cards.map((card, index) => (
+              <div
+                key={card.id}
+                className="card p-3 d-flex align-items-center justify-content-between flex-row mb-2 flex-wrap"
+                style={{
+                  borderLeft: "20px solid #FFCE1B",
+                  borderRadius: "10px",
+                }}
+              >
+                <div className="row">
+                  <div className=" col-md-12 Question">
+                    <p>
+                      <strong>Question:</strong>
+                    </p>
+                    <span>{card.question}</span>
+                  </div>
+                  <div className=" col-md-auto Answer">
+                    <p>
+                      <strong>Answer:</strong>
+                    </p>
+                    <span>{card.answer}</span>
+                  </div>
+                </div>
+                <div className="d-flex gap-3">
+                  <FaEdit
+                    size="20"
+                    style={{ cursor: "pointer" }}
+                    onClick={() => openEditModal(index)}
+                  />
+                  <>
+                    <MdDeleteForever
+                      size="20"
+                      style={{ cursor: "pointer" }}
+                      onClick={() => setShowConfirm(true)}
+                    />
+                    <Modal
+                      show={showConfirm}
+                      onHide={() => setShowConfirm(false)}
+                      centered
+                    >
+                      <Modal.Header closeButton>
+                        <Modal.Title>Confirm Deletion</Modal.Title>
+                      </Modal.Header>
+                      <Modal.Body>
+                        Are you sure you want to delete this card?
+                      </Modal.Body>
+                      <Modal.Footer>
+                        <Button
+                          variant="secondary"
+                          onClick={() => setShowConfirm(false)}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          variant="danger"
+                          onClick={() => deleteCard(index)}
+                        >
+                          Delete
+                        </Button>
+                      </Modal.Footer>
+                    </Modal>
+                  </>
+                </div>
+              </div>
+            ))}
+            <div
+              className="d-flex align-items-center justify-content-center mt-3 mb-5"
+              style={{ cursor: "pointer" }}
+              onClick={() => setShowCreateModal(true)}
+            >
+              <IoIosAddCircle
+                size="30"
+                className="rounded-circle bg-dark"
+                style={{ color: "#FFCE1B" }}
               />
-              <MdDeleteForever
-                size="20"
-                style={{ cursor: "pointer" }}
-                onClick={() => deleteCard(index)}
-              />
+              <span className="ms-2">Create New Card</span>
             </div>
           </div>
-        ))}
-        <div
-          className="d-flex align-items-center justify-content-center mt-3 mb-5"
-          style={{ cursor: "pointer" }}
-          onClick={() => setShowCreateModal(true)}
-        >
-          <IoIosAddCircle
-            size="30"
-            className="rounded-circle bg-dark"
-            style={{ color: "#FFCE1B" }}
-          />
-          <span className="ms-2">Create New Card</span>
-        </div>
-      </div>
-
-      <Modal
-        show={showCreateModal}
-        onHide={() => {
-          setShowCreateModal(false);
-          setNewQuestion("");
-          setNewAnswer("");
-        }}
-        centered
-      >
-        <Modal.Header closeButton>
-          <Modal.Title>Create Flashcard</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form>
-            <Form.Group>
-              <Form.Label>Question</Form.Label>
-              <Form.Control
-                type="text"
-                placeholder="Enter question"
-                value={newQuestion}
-                onChange={(e) => setNewQuestion(e.target.value)}
-              />
-            </Form.Group>
-            <Form.Group className="mt-3">
-              <Form.Label>Answer</Form.Label>
-              <Form.Control
-                type="text"
-                placeholder="Enter answer"
-                value={newAnswer}
-                onChange={(e) => setNewAnswer(e.target.value)}
-              />
-            </Form.Group>
-          </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowCreateModal(false)}>
-            Cancel
-          </Button>
-          <Button variant="primary" onClick={addCard}>
-            Add Card
-          </Button>
-        </Modal.Footer>
-      </Modal>
-
-      <Modal
-        show={showEditModal}
-        onHide={() => {
-          setShowEditModal(false);
-          setNewQuestion("");
-          setNewAnswer("");
-          setEditIndex(null);
-        }}
-        centered
-      >
-        <Modal.Header closeButton>
-          <Modal.Title>Edit Flashcard</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form>
-            <Form.Group>
-              <Form.Label>Question</Form.Label>
-              <Form.Control
-                type="text"
-                value={newQuestion}
-                onChange={(e) => setNewQuestion(e.target.value)}
-              />
-            </Form.Group>
-            <Form.Group className="mt-3">
-              <Form.Label>Answer</Form.Label>
-              <Form.Control
-                type="text"
-                value={newAnswer}
-                onChange={(e) => setNewAnswer(e.target.value)}
-              />
-            </Form.Group>
-          </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowEditModal(false)}>
-            Cancel
-          </Button>
-          <Button variant="primary" onClick={saveEdit}>
-            Save Changes
-          </Button>
-        </Modal.Footer>
-      </Modal>
-
-      <Modal
-        show={showEditDeckModal}
-        onHide={() => setShowEditDeckModal(false)}
-        centered
-      >
-        <Modal.Header closeButton>
-          <Modal.Title>Edit Deck</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form>
-            <Form.Group>
-              <Form.Label>Deck Name</Form.Label>
-              <Form.Control
-                type="text"
-                value={deckName}
-                onChange={(e) => setDeckName(e.target.value)}
-              />
-            </Form.Group>
-            <Form.Group className="mt-3">
-              <Form.Label>Description</Form.Label>
-              <Form.Control
-                as="textarea"
-                rows={3}
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-              />
-            </Form.Group>
-          </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button
-            variant="secondary"
-            onClick={() => setShowEditDeckModal(false)}
+          <Modal
+            show={showCreateModal}
+            onHide={() => {
+              setShowCreateModal(false);
+              setNewQuestion("");
+              setNewAnswer("");
+            }}
+            centered
           >
-            Cancel
-          </Button>
-          <Button variant="primary" onClick={updateDeckDetails}>
-            Save Changes
-          </Button>
-        </Modal.Footer>
-      </Modal>
+            <Modal.Header closeButton>
+              <Modal.Title>Create Flashcard</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              <Form>
+                <Form.Group className="mb-3">
+                  <div className="d-flex">
+                    <Form.Label className="d-flex justify-self-center mt-3 pe-3">
+                      Question:
+                    </Form.Label>
+                    <Form.Control
+                      as="textarea"
+                      placeholder="Enter question"
+                      value={newQuestion}
+                      onChange={(e) => setNewQuestion(e.target.value)}
+                      style={{ resize: "both", minHeight: "80px" }} // allow resizing both directions
+                    />
+                  </div>
+                </Form.Group>
+                <Form.Group className="mt-3">
+                  <div className="d-flex">
+                    <Form.Label className="d-flex justify-self-center mt-3 pe-3">
+                      Answer:
+                    </Form.Label>
+                    <Form.Control
+                      type="text"
+                      placeholder="Enter answer"
+                      value={newAnswer}
+                      onChange={(e) => setNewAnswer(e.target.value)}
+                    />
+                  </div>
+                </Form.Group>
+              </Form>
+            </Modal.Body>
+            <Modal.Footer>
+              <Button
+                variant="secondary"
+                onClick={() => setShowCreateModal(false)}
+              >
+                Cancel
+              </Button>
+              <Button variant="primary" onClick={addCard}>
+                Add Card
+              </Button>
+            </Modal.Footer>
+          </Modal>
+          <Modal
+            show={showEditModal}
+            onHide={() => {
+              setShowEditModal(false);
+              setNewQuestion("");
+              setNewAnswer("");
+              setEditIndex(null);
+            }}
+            centered
+          >
+            <Modal.Header closeButton>
+              <Modal.Title>Edit Flashcard</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              <Form>
+                <Form.Group>
+                  <Form.Label>Question</Form.Label>
+                  <Form.Control
+                    type="text"
+                    value={newQuestion}
+                    onChange={(e) => setNewQuestion(e.target.value)}
+                  />
+                </Form.Group>
+                <Form.Group className="mt-3">
+                  <Form.Label>Answer</Form.Label>
+                  <Form.Control
+                    type="text"
+                    value={newAnswer}
+                    onChange={(e) => setNewAnswer(e.target.value)}
+                  />
+                </Form.Group>
+              </Form>
+            </Modal.Body>
+            <Modal.Footer>
+              <Button
+                variant="secondary"
+                onClick={() => setShowEditModal(false)}
+              >
+                Cancel
+              </Button>
+              <Button variant="primary" onClick={saveEdit}>
+                Save Changes
+              </Button>
+            </Modal.Footer>
+          </Modal>
+          <Modal
+            show={showEditDeckModal}
+            onHide={() => setShowEditDeckModal(false)}
+            centered
+          >
+            <Modal.Header closeButton>
+              <Modal.Title>Edit Deck</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              <Form>
+                <Form.Group>
+                  <Form.Label>Deck Name</Form.Label>
+                  <Form.Control
+                    type="text"
+                    value={deckName}
+                    onChange={(e) => setDeckName(e.target.value)}
+                  />
+                </Form.Group>
+                <Form.Group className="mt-3">
+                  <Form.Label>Description</Form.Label>
+                  <Form.Control
+                    as="textarea"
+                    rows={3}
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                  />
+                </Form.Group>
+              </Form>
+            </Modal.Body>
+            <Modal.Footer>
+              <Button
+                variant="secondary"
+                onClick={() => setShowEditDeckModal(false)}
+              >
+                Cancel
+              </Button>
+              <Button variant="primary" onClick={updateDeckDetails}>
+                Save Changes
+              </Button>
+            </Modal.Footer>
+          </Modal>
+        </>
+      )}
     </React.Fragment>
   );
 }

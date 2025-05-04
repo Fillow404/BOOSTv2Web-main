@@ -51,7 +51,7 @@ export default function FlashcardQnA({
       );
       setChoices(allChoices);
 
-      setTimeLeft(15);
+      setTimeLeft(10);
     } else {
       setQuizCompleted(true);
     }
@@ -194,28 +194,48 @@ export default function FlashcardQnA({
   return (
     <React.Fragment>
       <div className="container mt-4">
-        <div className="d-flex justify-content-between align-items-center">
+        <div className="d-flex mt-4 align-items-center">
           <RxExit
             size="30"
             className="m-2 me-4"
             id="exit-btn"
             onClick={onExit}
           />
-        </div>
-        <div id="bg-1" className="d-flex flex-wrap align-items-center">
-          <span className="ms-4 me-2 text-white">Deck: {deckTitle}</span>
-          <span className="ms-2 text-white">
-            Score: {score}/{cards.length}
-          </span>
-        </div>
-        <div className="d-flex flex-wrap align-items-center">
-          <progress value={timeLeft} max={15}></progress>
-          <span className="text-center fw-bold">Time Left: {timeLeft}s</span>
-        </div>
-        <div className="container">
-          <div id="question-card" className="card mt-4 text-center p-3">
-            {currentQuestion.question}
+          <div
+            id="bg-1"
+            className="d-flex justify-content-center align-items-center flex-wrap mt-4 w-100"
+          >
+            <span className="mx-2 text-white">Deck: {deckTitle}</span>
+            <span className="mx-2 text-white">
+              Score: {score}/{cards.length}
+            </span>
           </div>
+        </div>
+
+        <div className="d-flex flex-wrap align-items-center"></div>
+        <div className="container">
+          <div
+            id="question-card"
+            className="card mt-4 text-center p-3 position-relative overflow-hidden"
+          >
+            <div className="card-body">
+              <h5 className="mb-3">{currentQuestion.question}</h5>
+              <span className="fw-bold">Time Left: {timeLeft}s</span>
+            </div>
+
+            <div
+              style={{
+                position: "absolute",
+                bottom: 0,
+                left: 0,
+                height: "6px",
+                width: `${(timeLeft / 15) * 100}%`, // dynamic width based on time
+                backgroundColor: "#ffc107",
+                transition: "width 1s linear", // smooth shrinking
+              }}
+            />
+          </div>
+
           <div
             id="choices-container"
             className="row justify-content-center gap-3 mt-4"
