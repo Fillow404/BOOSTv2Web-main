@@ -1,94 +1,67 @@
 import React, { useEffect, useState, useCallback } from "react";
 import {
   Excalidraw,
+  loadFromBlob,
   serializeAsJSON,
-  loadLibraryFromBlob,
-  exportToSvg,
 } from "@excalidraw/excalidraw";
 import "@excalidraw/excalidraw/index.css";
 
 import { supabase } from "../supabase";
 import { db } from "../firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
+
 import { ExcalidrawElement } from "@excalidraw/excalidraw/element/types";
 import { AppState } from "@excalidraw/excalidraw/types";
-import { getAuth } from "firebase/auth"; // Added authentication import
 
-
-class ErrorBoundary extends React.Component<
-  { children: React.ReactNode },
-  { hasError: boolean }
-> {
-  constructor(props: { children: React.ReactNode }) {
-    super(props);
-    this.state = { hasError: false };
-  }
-
-  static getDerivedStateFromError(): { hasError: boolean } {
-    return { hasError: true };
-  }
-
-  componentDidCatch(error: any, info: any) {
-    console.error("Error captured in boundary:", error, info);
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return <div>Something went wrong.</div>;
-    }
-    return this.props.children;
-  }
+interface WhiteboardProps {
+  fileUrl: string;
+  onBack: () => void;
 }
 
-const ExcalidrawEditor: React.FC = () => {
-  const [title, setTitle] = useState<string>("");
-  const [isLoadingLibraries, setIsLoadingLibraries] = useState<boolean>(true);
-  const [errorMessage, setErrorMessage] = useState<string>("");
+const Whiteboard: React.FC<WhiteboardProps> = ({ fileUrl, onBack }) => {
+  const [title, setTitle] = useState<string>("Untitled Whiteboard");
   const [elements, setElements] = useState<ExcalidrawElement[]>([]);
   const [appState, setAppState] = useState<AppState>({} as AppState);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [errorMessage, setErrorMessage] = useState<string>("");
 
-  // Load Libraries
+  // Load existing whiteboard from Supabase
   useEffect(() => {
-    const loadLibraries = async () => {
+    const fetchAndLoadFile = async () => {
       try {
-        const libPaths = [
-          "/Draw/architecture-diagram-components.excalidrawlib",
-        ];
-        const allLibItems = await Promise.all(
-          libPaths.map(async (path) => {
-            const response = await fetch(path);
-            if (!response.ok) {
-              throw new Error(`Failed to fetch library from ${path}`);
-            }
-            const blob = await response.blob();
-            return loadLibraryFromBlob(blob);
-          })
-        );
+        const response = await fetch(fileUrl);
+        if (!response.ok) throw new Error("Failed to fetch file.");
+        const blob = await response.blob();
 
-        const combinedLibrary = allLibItems.flat();
-        console.log("Library loaded successfully", combinedLibrary);
-      } catch (err) {
-        console.error("Failed to load libraries:", err);
-        setErrorMessage("Error loading diagram libraries.");
+        const { elements: loadedElements, appState: loadedAppState } =
+          await loadFromBlob(blob, null, []);
+
+        setElements(loadedElements as ExcalidrawElement[]);
+        setAppState(loadedAppState as AppState);
+
+        // Log view to Firestore
+        const auth = getAuth();
+        const user = auth.currentUser;
+        if (user) {
+          await addDoc(collection(db, "users", user.uid, "whiteboardViews"), {
+            url: fileUrl,
+            viewedAt: serverTimestamp(),
+          });
+        }
+      } catch (error) {
+        console.error("Error loading file:", error);
+        setErrorMessage("Failed to load the whiteboard file.");
       } finally {
-        setIsLoadingLibraries(false);
+        setIsLoading(false);
       }
     };
 
-    loadLibraries();
-  }, []);
+    fetchAndLoadFile();
+  }, [fileUrl]);
 
-  // Handle Excalidraw Changes
-  const handleExcalidrawChange = useCallback(
-    (newElements: readonly ExcalidrawElement[], newAppState: AppState) => {
-      setElements(newElements as ExcalidrawElement[]);
-      setAppState(newAppState);
-    },
-    []
-  );
-
-  // Save Task
-  const handleSaveTask = useCallback(async () => {
+  // Save updated whiteboard
+  const handleSave = useCallback(async () => {
     try {
       const auth = getAuth();
       const user = auth.currentUser;
@@ -128,7 +101,8 @@ const ExcalidrawEditor: React.FC = () => {
         title: safeTitle,
         url: downloadURL,
         fileName,
-        createdAt: serverTimestamp(),
+        createdAt: serverTimestamp(), // ✅ Firestore server time
+        readableDate: new Date().toLocaleString(), // ✅ Optional: readable string
       });
 
       alert("Whiteboard saved successfully!");
@@ -140,113 +114,49 @@ const ExcalidrawEditor: React.FC = () => {
     }
   }, [title, elements, appState]);
 
-  // Export to Local (JSON)
-  const handleExportJson = useCallback(() => {
-    try {
-      const json = serializeAsJSON(elements, appState, {}, "local");
-      const blob = new Blob([json], { type: "application/json" });
-
-      const safeTitle = title.trim() || "untitled";
-      const fileName = `${safeTitle
-        .replace(/\s+/g, "-")
-        .toLowerCase()}-${Date.now()}.excalidraw`;
-
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = fileName;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error("Error exporting JSON:", err);
-      setErrorMessage("Error exporting the whiteboard.");
-    }
-  }, [title, elements, appState]);
-
-  // Export to SVG
-  const handleExportSvg = useCallback(() => {
-    try {
-      const svg = exportToSvg(elements);
-      const blob = new Blob([svg], { type: "image/svg+xml" });
-
-      const safeTitle = title.trim() || "untitled";
-      const fileName = `${safeTitle
-        .replace(/\s+/g, "-")
-        .toLowerCase()}-${Date.now()}.svg`;
-
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = fileName;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error("Error exporting SVG:", err);
-      setErrorMessage("Error exporting the whiteboard.");
-    }
-  }, [title, elements]);
+  const handleExcalidrawChange = useCallback(
+    (newElements: readonly ExcalidrawElement[], newAppState: AppState) => {
+      setElements(newElements as ExcalidrawElement[]);
+      setAppState(newAppState);
+    },
+    []
+  );
 
   return (
-    <ErrorBoundary>
-      <div className="d-flex flex-column vh-100">
-        <div className="bg-light border-bottom p-2 d-flex gap-2 align-items-center">
-          <input
-            className="form-control"
-            placeholder="Whiteboard Title (optional)"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            disabled={isLoadingLibraries}
-          />
-          <button
-            className="btn btn-primary"
-            onClick={handleSaveTask}
-            disabled={isLoadingLibraries}
-          >
-            Save Task
-          </button>
-          <button
-            className="btn btn-secondary"
-            onClick={handleExportJson}
-            disabled={isLoadingLibraries}
-          >
-            Export JSON
-          </button>
-          <button
-            className="btn btn-secondary"
-            onClick={handleExportSvg}
-            disabled={isLoadingLibraries}
-          >
-            Export SVG
-          </button>
-        </div>
+    <div className="d-flex flex-column vh-100">
+      <div className="bg-light border-bottom p-2 d-flex gap-2 align-items-center">
+        <button className="btn btn-secondary" onClick={onBack}>
+          Back
+        </button>
+        <input
+          className="form-control"
+          placeholder="Whiteboard Title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          style={{ maxWidth: "300px" }}
+        />
+        <button className="btn btn-success" onClick={handleSave}>
+          Save
+        </button>
+      </div>
 
-        {errorMessage && (
-          <div className="alert alert-danger m-2 p-2">{errorMessage}</div>
-        )}
+      {errorMessage && (
+        <div className="alert alert-danger m-2 p-2">{errorMessage}</div>
+      )}
 
-        <div className="flex-grow-1 position-relative">
+      <div className="flex-grow-1 position-relative">
+        {!isLoading && (
           <Excalidraw
             theme="light"
-            UIOptions={{
-              canvasActions: {
-                saveToActiveFile: false,
-              },
-            }}
+            UIOptions={{ canvasActions: { saveToActiveFile: false } }}
             onChange={handleExcalidrawChange}
-            initialData={{
-              elements,
-              appState,
-            }}
-            name="Whiteboard Editor"
+            initialData={{ elements, appState }}
+            name="Whiteboard Viewer"
           />
-        </div>
+        )}
       </div>
-    </ErrorBoundary>
+    </div>
   );
 };
 
-export default ExcalidrawEditor;
+export default Whiteboard;

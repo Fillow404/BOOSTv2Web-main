@@ -3,7 +3,7 @@ import { BsSearch } from "react-icons/bs";
 import SmartGoals from "./SmartGoals";
 import Mindmap from "./Whiteboard";
 import MindFlow from "./MindFlow";
-import { db } from "../firebase"; 
+import { db } from "../firebase";
 import { collection, getDocs } from "firebase/firestore";
 import { getAuth, onAuthStateChanged, User } from "firebase/auth";
 import "./Brainstorming.css";
@@ -20,11 +20,13 @@ export default function Brainstorming() {
   const [activeComponent, setActiveComponent] = useState("brainstorming");
   const [whiteboards, setWhiteboards] = useState<Whiteboard[]>([]);
   const [user, setUser] = useState<User | null>(null);
+  const [selectedWhiteboardUrl, setSelectedWhiteboardUrl] =
+    useState<string>("");
 
   useEffect(() => {
     const auth = getAuth();
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser); 
+      setUser(currentUser);
     });
 
     return () => unsubscribe();
@@ -46,7 +48,7 @@ export default function Brainstorming() {
             filename: data.filename,
             title: data.title,
             url: data.url,
-            createdAt, 
+            createdAt,
           };
         });
         setWhiteboards(whiteboardData);
@@ -102,6 +104,10 @@ export default function Brainstorming() {
               <div
                 key={whiteboard.id}
                 className="d-flex justify-content-between align-items-center p-2 border-bottom"
+                onClick={() => {
+                  setSelectedWhiteboardUrl(whiteboard.url); // Set the URL of the selected whiteboard
+                  setActiveComponent("mindmap");
+                }}
               >
                 <span>{whiteboard.title}</span>
                 <span>{whiteboard.createdAt}</span>
@@ -110,7 +116,10 @@ export default function Brainstorming() {
           </div>
         </>
       ) : activeComponent === "mindmap" ? (
-        <Mindmap />
+        <Mindmap
+          fileUrl={selectedWhiteboardUrl} // Pass the URL of the selected whiteboard
+          onBack={() => setActiveComponent("brainstorming")}
+        />
       ) : activeComponent === "smartgoals" ? (
         <SmartGoals onBack={() => setActiveComponent("brainstorming")} />
       ) : (

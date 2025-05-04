@@ -243,7 +243,7 @@ export default function FlashcardQnA({
             {choices.map((choice, index) => (
               <button
                 key={index}
-                className={`btn col-12 col-sm-5 col-md-3 text-white ${
+                className={`btn col-5 text-white ${
                   selectedChoice
                     ? choice === currentQuestion.answer
                       ? "btn-success"

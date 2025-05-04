@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Button, Modal } from "react-bootstrap";
+import { FaEdit } from "react-icons/fa";
+import { MdDeleteForever } from "react-icons/md";
 
 import "./Flashcard.css";
 import "bootstrap/dist/css/bootstrap.min.css";
@@ -15,7 +17,6 @@ import {
   updateDoc,
   serverTimestamp,
   getDocs,
-  arrayUnion,
 } from "firebase/firestore";
 import { BsInfoCircle } from "react-icons/bs";
 
@@ -36,10 +37,11 @@ export default function Flashcard() {
       title: string;
       decks: {
         createdAt: any;
-        tags: boolean;
+        tags: boolean | string[];
         id: string;
         name: string;
         description: string;
+        color?: string;
       }[];
     }[]
   >([]);
@@ -62,6 +64,12 @@ export default function Flashcard() {
     title: string;
   } | null>(null);
   const [editTopicTitle, setEditTopicTitle] = useState("");
+  const [selectedDeck, setSelectedDeck] = useState<{
+    id: string;
+    name: string;
+    description: string;
+    tags: string[];
+  } | null>(null);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (userAuth) => {
@@ -114,7 +122,7 @@ export default function Flashcard() {
 
     const newTopic = {
       title: newTopicName.trim(),
-      createdAt: serverTimestamp(),
+      createdAt: serverTimestamp() || null,
     };
 
     try {
@@ -199,11 +207,72 @@ export default function Flashcard() {
       );
       const decksCollectionRef = collection(topicDocRef, "decks");
       const deckDocRef = await addDoc(decksCollectionRef, newDeck);
+
+      // Update the state to reflect the new deck without reloading
+      setTopics((prevTopics) =>
+        prevTopics.map((topic) =>
+          topic.id === selectedTopicId
+            ? {
+                ...topic,
+                decks: [...topic.decks, { id: deckDocRef.id, ...newDeck }],
+              }
+            : topic
+        )
+      );
+
       setNewDeckName("");
       setNewDeckDescription("");
+      setNewDeckTags("");
       setShowAddDeckModal(false);
     } catch (error) {
       console.error("Error creating deck:", error);
+    }
+  };
+
+  const handleEditDeck = async () => {
+    if (!newDeckName.trim() || !selectedDeck || !selectedTopicId) return;
+
+    const updatedDeck = {
+      name: newDeckName.trim(),
+      description: newDeckDescription.trim(),
+      tags: newDeckTags
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter(Boolean),
+    };
+
+    try {
+      const deckDocRef = doc(
+        firestore,
+        "users",
+        user.uid,
+        "flashcard",
+        selectedTopicId,
+        "decks",
+        selectedDeck.id
+      );
+      await updateDoc(deckDocRef, updatedDeck);
+
+      // Update the state to reflect the edited deck without reloading
+      setTopics((prevTopics) =>
+        prevTopics.map((topic) =>
+          topic.id === selectedTopicId
+            ? {
+                ...topic,
+                decks: topic.decks.map((deck) =>
+                  deck.id === selectedDeck.id
+                    ? { ...deck, ...updatedDeck }
+                    : deck
+                ),
+              }
+            : topic
+        )
+      );
+
+      setShowAddDeckModal(false);
+      setSelectedDeck(null);
+    } catch (error) {
+      console.error("Error editing deck:", error);
     }
   };
 
@@ -362,7 +431,7 @@ export default function Flashcard() {
                   <div
                     key={deck.id}
                     id="flashcard-card"
-                    className="col-12 col-sm-6 col-md-4 col-lg-3 ms-3 card rounded-5 btn text-start p-3"
+                    className="col-12 col-sm-6 col-md-4 col-lg-3 ms-3 card rounded-5 btn text-start p-3 position-relative"
                     onClick={() =>
                       setActiveComponent({
                         name: "flashcardDetails",
@@ -373,7 +442,10 @@ export default function Flashcard() {
                     }
                     style={{
                       borderTop: `60px solid ${
-                        "#" + Math.floor(Math.random() * 16777215).toString(16)
+                        deck.color ||
+                        (deck.color =
+                          "#" +
+                          Math.floor(Math.random() * 16777215).toString(16))
                       }`,
                     }}
                   >
@@ -409,12 +481,45 @@ export default function Flashcard() {
                       </div>
                     )}
                     <p className="ms-2">
-                      {deck.createdAt?.toDate().toLocaleDateString("en-US", {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })}{" "}
+                      {deck.createdAt && deck.createdAt.toDate
+                        ? deck.createdAt.toDate().toLocaleDateString("en-US", {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                          })
+                        : "Unknown Date"}{" "}
                     </p>
+
+                    {/* Edit and Delete Icons */}
+                    <div className="position-absolute top-0 end-0 m-2 d-flex gap-2">
+                      <FaEdit
+                        size="20"
+                        style={{ cursor: "pointer", color: "yellow" }}
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevent triggering the deck click
+                          setSelectedTopicId(topic.id);
+                          setSelectedDeck({
+                            ...deck,
+                            tags: Array.isArray(deck.tags) ? deck.tags : [],
+                          });
+                          setNewDeckName(deck.name);
+                          setNewDeckDescription(deck.description);
+                          setNewDeckTags(
+                            Array.isArray(deck.tags) ? deck.tags.join(", ") : ""
+                          );
+                          setShowAddDeckModal(true); // Reuse the modal for editing
+                        }}
+                      />
+                      <MdDeleteForever
+                        size="20"
+                        style={{ cursor: "pointer", color: "red" }}
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevent triggering the deck click
+                          setSelectedTopicId(topic.id);
+                          handleDeleteDeck(deck.id, topic.id);
+                        }}
+                      />
+                    </div>
                   </div>
                 ))}
 
@@ -449,7 +554,6 @@ export default function Flashcard() {
           deckTitle={activeComponent.deckTitle}
           deckDescription={activeComponent.deckDescription}
           topicId={selectedTopicId!}
-          onDeleteDeck={(deckId) => handleDeleteDeck(deckId, selectedTopicId!)}
         />
       )}
 
@@ -502,7 +606,7 @@ export default function Flashcard() {
       {showAddDeckModal && (
         <div className="modal-backdrop-deck">
           <div className="modal-content p-4 rounded-5 bg-light" id="card-bg">
-            <h3>Create New Deck</h3>
+            <h3>{selectedDeck ? "Edit Deck" : "Create New Deck"}</h3>
             <p>A Deck is a set of flashcards.</p>
             <input
               type="text"
@@ -522,20 +626,26 @@ export default function Flashcard() {
               <input
                 type="text"
                 id="tagsInput"
-                value={newDeckTags} // Add state for tags
-                onChange={(e) => handleTagsChange(e.target.value)} // Add handler
+                value={newDeckTags}
+                onChange={(e) => handleTagsChange(e.target.value)}
                 className="modal-input form-control mb-3"
               />
             </div>
             <div className="modal-buttons">
               <button
-                onClick={() => setShowAddDeckModal(false)}
+                onClick={() => {
+                  setShowAddDeckModal(false);
+                  setSelectedDeck(null); // Reset selected deck
+                }}
                 className="btn btn-secondary me-2"
               >
                 Cancel
               </button>
-              <button onClick={handleCreateDeck} className="btn btn-primary">
-                Create
+              <button
+                onClick={selectedDeck ? handleEditDeck : handleCreateDeck}
+                className="btn btn-primary"
+              >
+                {selectedDeck ? "Save Changes" : "Create"}
               </button>
             </div>
           </div>

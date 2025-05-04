@@ -24,7 +24,6 @@ interface Flashcard {
 
 interface FlashcardContentProps {
   onBack: () => void;
-  onDeleteDeck: (deckId: string) => void;
   deckId: string;
   topicId: string;
   deckTitle: string;
@@ -33,7 +32,6 @@ interface FlashcardContentProps {
 
 export default function FlashcardContent({
   onBack,
-  onDeleteDeck,
   deckId,
   topicId,
   deckTitle,
@@ -46,16 +44,10 @@ export default function FlashcardContent({
   const [newAnswer, setNewAnswer] = useState("");
   const [editIndex, setEditIndex] = useState<number | null>(null);
   const [isStarting, setIsStarting] = useState(false);
-  const [description, setDescription] = useState(deckDescription);
-  const [deckName, setDeckName] = useState(deckTitle);
-  const [showEditDeckModal, setShowEditDeckModal] = useState(false);
 
   const user = auth.currentUser;
   const username = user?.displayName || "Anonymous";
 
-  const deckRef = user
-    ? doc(db, `users/${user.uid}/flashcard/${topicId}/decks`, deckId)
-    : null;
   const cardsCollection = user
     ? collection(
         db,
@@ -81,7 +73,6 @@ export default function FlashcardContent({
 
     fetchCards();
   }, [cardsCollection]);
-  const [showConfirm, setShowConfirm] = useState(false);
 
   const addCard = async () => {
     if (
@@ -159,38 +150,6 @@ export default function FlashcardContent({
     }
   };
 
-  const updateDeckDetails = async () => {
-    if (!deckRef || deckName.trim() === "" || description.trim() === "") return;
-
-    try {
-      await updateDoc(deckRef, { title: deckName, description });
-      setShowEditDeckModal(false);
-    } catch (error) {
-      console.error("Error updating deck details:", error);
-    }
-  };
-
-  const deleteDeck = async () => {
-    if (!deckId || !topicId || !user) {
-      return;
-    }
-
-    try {
-      const deckRef = doc(
-        db,
-        `users/${user.uid}/flashcard/${topicId}/decks`,
-        deckId
-      );
-      await deleteDoc(deckRef);
-      onDeleteDeck(deckId);
-      onBack();
-      console.log("Deck deleted successfully.");
-    } catch (error) {
-      console.error("Error deleting deck:", error);
-    }
-  };
-
-  const [showModal, setShowModal] = useState(false);
   return (
     <React.Fragment>
       {isStarting ? (
@@ -213,7 +172,7 @@ export default function FlashcardContent({
                 <GoStack size="100" />
                 <div>
                   <h3 className="mb-1 text-center text-md-start text-wrap">
-                    {deckName}
+                    {deckTitle}
                   </h3>
                   <div className="d-flex justify-content-between align-items-center flex-wrap">
                     <div className="text-muted mb-2 text-center text-md-start">
@@ -231,53 +190,6 @@ export default function FlashcardContent({
                         ? "Please input 4 cards more to start"
                         : "Start"}
                     </button>
-                    <button
-                      id="edit-btn"
-                      className="btn btn-outline-secondary"
-                      onClick={() => setShowEditDeckModal(true)}
-                    >
-                      Edit
-                    </button>
-                    <>
-                      <button
-                        id="delete-btn"
-                        className="btn btn-outline-danger"
-                        onClick={() => {
-                          setShowModal(true);
-                          deleteDeck();
-                        }}
-                      >
-                        Delete
-                      </button>
-                      <Modal
-                        show={showModal}
-                        onHide={() => setShowModal(false)}
-                        centered
-                      >
-                        <Modal.Header closeButton>
-                          <Modal.Title>Confirm Deletion</Modal.Title>
-                        </Modal.Header>
-                        <Modal.Body>
-                          Are you sure you want to delete this deck?
-                        </Modal.Body>
-                        <Modal.Footer>
-                          <Button
-                            variant="secondary"
-                            onClick={() => setShowModal(false)}
-                          >
-                            Cancel
-                          </Button>
-                          <Button
-                            variant="danger"
-                            onClick={() => {
-                              deleteDeck();
-                            }}
-                          >
-                            Delete
-                          </Button>
-                        </Modal.Footer>
-                      </Modal>
-                    </>
                   </div>
                 </div>
               </div>
@@ -285,7 +197,7 @@ export default function FlashcardContent({
           </div>
           <h3 className="ms-5 text-wrap">Description:</h3>
           <div className="ms-5 w-50">
-            {description.match(/.{1,130}/g)?.map((line, index) => (
+            {deckDescription.match(/.{1,130}/g)?.map((line, index) => (
               <span key={index}>
                 {line}
                 <br />
@@ -324,39 +236,11 @@ export default function FlashcardContent({
                     style={{ cursor: "pointer" }}
                     onClick={() => openEditModal(index)}
                   />
-                  <>
-                    <MdDeleteForever
-                      size="20"
-                      style={{ cursor: "pointer" }}
-                      onClick={() => setShowConfirm(true)}
-                    />
-                    <Modal
-                      show={showConfirm}
-                      onHide={() => setShowConfirm(false)}
-                      centered
-                    >
-                      <Modal.Header closeButton>
-                        <Modal.Title>Confirm Deletion</Modal.Title>
-                      </Modal.Header>
-                      <Modal.Body>
-                        Are you sure you want to delete this card?
-                      </Modal.Body>
-                      <Modal.Footer>
-                        <Button
-                          variant="secondary"
-                          onClick={() => setShowConfirm(false)}
-                        >
-                          Cancel
-                        </Button>
-                        <Button
-                          variant="danger"
-                          onClick={() => deleteCard(index)}
-                        >
-                          Delete
-                        </Button>
-                      </Modal.Footer>
-                    </Modal>
-                  </>
+                  <MdDeleteForever
+                    size="20"
+                    style={{ cursor: "pointer" }}
+                    onClick={() => deleteCard(index)}
+                  />
                 </div>
               </div>
             ))}
@@ -469,47 +353,6 @@ export default function FlashcardContent({
                 Cancel
               </Button>
               <Button variant="primary" onClick={saveEdit}>
-                Save Changes
-              </Button>
-            </Modal.Footer>
-          </Modal>
-          <Modal
-            show={showEditDeckModal}
-            onHide={() => setShowEditDeckModal(false)}
-            centered
-          >
-            <Modal.Header closeButton>
-              <Modal.Title>Edit Deck</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-              <Form>
-                <Form.Group>
-                  <Form.Label>Deck Name</Form.Label>
-                  <Form.Control
-                    type="text"
-                    value={deckName}
-                    onChange={(e) => setDeckName(e.target.value)}
-                  />
-                </Form.Group>
-                <Form.Group className="mt-3">
-                  <Form.Label>Description</Form.Label>
-                  <Form.Control
-                    as="textarea"
-                    rows={3}
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                  />
-                </Form.Group>
-              </Form>
-            </Modal.Body>
-            <Modal.Footer>
-              <Button
-                variant="secondary"
-                onClick={() => setShowEditDeckModal(false)}
-              >
-                Cancel
-              </Button>
-              <Button variant="primary" onClick={updateDeckDetails}>
                 Save Changes
               </Button>
             </Modal.Footer>

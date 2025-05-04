@@ -189,23 +189,14 @@ export default function MindFlow({ onBack }: MindFlowProps) {
       return;
     }
 
-    // Get current user UID
-    const { data: { user } } = await supabase.auth.getUser(); // If you're using Supabase for authentication
-    const userId = user?.id; // Get the user ID (UID)
-
-    if (!userId) {
-      setMessage("Please sign in to save your MindFlow.");
-      return;
-    }
-
     try {
       const fileContent = JSON.stringify({ nodes, edges }, null, 2);
       const blob = new Blob([fileContent], { type: "application/json" });
       const filePath = `mindflows/${fileName}.json`;
 
-      // Upload the file to Supabase storage
+      // Upload to Supabase Storage under "mindflow" bucket
       const { error: uploadError } = await supabase.storage
-        .from("mindflow")
+        .from("mindflow") // Bucket name
         .upload(filePath, blob, {
           cacheControl: "3600",
           upsert: true,
@@ -217,8 +208,8 @@ export default function MindFlow({ onBack }: MindFlowProps) {
         return;
       }
 
-      // Save metadata in Firestore under the user
-      await addDoc(collection(db, "users", userId, "mindflows"), {
+      // Save metadata in Firestore under a shared collection
+      await addDoc(collection(db, "mindflows"), {
         fileName: fileName,
         filePath: filePath,
         createdAt: serverTimestamp(),
