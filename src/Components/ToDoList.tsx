@@ -233,7 +233,7 @@ const FcTodoList: React.FC = () => {
         ...newTask,
         id: uuidv4(),
         createdAt: serverTimestamp(),
-        timeLeft: calculateTimeLeft(newTask.dueDate).text, // fix: use .text property
+        timeLeft: calculateTimeLeft(newTask.dueDate).text,
         userId: user.uid,
         status: "pending",
         completedTime: null,
@@ -324,6 +324,15 @@ const FcTodoList: React.FC = () => {
     });
   };
 
+  const [timerTick, setTimerTick] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTimerTick((tick) => tick + 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
   const calculateTimeLeft = (dueDate: Date | null): { text: string; overdue: boolean } => {
     if (!dueDate) return { text: "", overdue: false };
     const now = new Date();
@@ -346,14 +355,13 @@ const FcTodoList: React.FC = () => {
     const minutes = Math.floor(seconds / 60);
     seconds -= minutes * 60;
 
-    // Only display the largest non-zero unit
     let timeLeftString = "";
-    if (years > 0) timeLeftString = `${years}y`;
-    else if (months > 0) timeLeftString = `${months}mo`;
-    else if (days > 0) timeLeftString = `${days}d`;
-    else if (hours > 0) timeLeftString = `${hours}h`;
-    else if (minutes > 0) timeLeftString = `${minutes}m`;
-    else timeLeftString = `${seconds}s`;
+    if (years > 0) timeLeftString += `${years}y `;
+    if (months > 0) timeLeftString += `${months}mo `;
+    if (days > 0) timeLeftString += `${days}d `;
+    if (hours > 0) timeLeftString += `${hours}h `;
+    if (minutes > 0) timeLeftString += `${minutes}m `;
+    timeLeftString += `${seconds}s`;
 
     if (overdue) return { text: "Overdue", overdue: true };
     return { text: timeLeftString, overdue: false };
@@ -394,16 +402,10 @@ const FcTodoList: React.FC = () => {
         ? task.dueDate.toDate()
         : task.dueDate
     );
-    // Show "Completed" if task is completed
-    let timerDisplay = "";
-    if (task.status === "completed") {
-      timerDisplay = "Completed";
-    } else {
-      // Only display the largest non-zero unit
-      const match = timeLeftObj.text.match(/(\d+y)|(\d+mo)|(\d+d)|(\d+h)|(\d+m)|(\d+s)/g);
-      timerDisplay = match && match.length > 0 ? match[0].trim() : timeLeftObj.text;
-      if (timeLeftObj.overdue) timerDisplay = "Overdue";
-    }
+    const timerDisplay =
+      task.status === "completed"
+        ? "Completed"
+        : timeLeftObj.text;
 
     return (
       <div
@@ -508,10 +510,6 @@ const FcTodoList: React.FC = () => {
                   e.stopPropagation();
                   handleMarkAsCompleted(task.id);
                 }}
-                disabled={
-                  task.checklist.length > 0 &&
-                  !task.checklist.every((item) => item.checked)
-                }
               >
                 Complete
               </Button>
@@ -528,17 +526,14 @@ const FcTodoList: React.FC = () => {
       return;
     }
 
-    // Reorder the checklist items
     const reorderedChecklist = Array.from(selectedTask?.checklist || []);
     const [removed] = reorderedChecklist.splice(source.index, 1);
     reorderedChecklist.splice(destination.index, 0, removed);
 
-    // Update the checklist state after reordering
     setSelectedTask((prev) =>
       prev ? { ...prev, checklist: reorderedChecklist } : null
     );
 
-    // Optionally, update Pangea with the new order
   };
 
   return (
@@ -614,7 +609,6 @@ const FcTodoList: React.FC = () => {
           <div className="CardTask">
             {tasks
               .filter((task) => {
-                // Overdue: not completed, dueDate < now
                 const due =
                   task.dueDate instanceof Timestamp
                     ? task.dueDate.toDate()
@@ -627,7 +621,6 @@ const FcTodoList: React.FC = () => {
               })
               .filter((task) => task.status === "pending" || task.status === "onProgress")
               .map((task) => {
-                // Deduct 100 exp if task is overdue and not yet deducted
                 const due =
                   task.dueDate instanceof Timestamp
                     ? task.dueDate.toDate()
@@ -637,9 +630,7 @@ const FcTodoList: React.FC = () => {
                   due &&
                   due < new Date();
 
-                // Use a flag in task to avoid multiple deductions (optional, for idempotency)
                 if (isOverdue && user && !(task as any).expDeducted) {
-                  // Fire and forget, do not await in render
                   (async () => {
                     try {
                       const userRef = doc(db, "users", user.uid);
@@ -649,7 +640,6 @@ const FcTodoList: React.FC = () => {
                         const newExp = Math.max(0, currentExp - 100);
                         await updateDoc(userRef, { exp: newExp });
                       }
-                      // Mark this task as expDeducted to avoid repeated deduction
                       const taskRef = doc(db, "users", user.uid, "todolist", task.id);
                       await updateDoc(taskRef, { expDeducted: true });
                       setTasks((prevTasks) =>
@@ -658,7 +648,6 @@ const FcTodoList: React.FC = () => {
                         )
                       );
                     } catch (error) {
-                      // Optionally handle error
                     }
                   })();
                 }
@@ -669,16 +658,10 @@ const FcTodoList: React.FC = () => {
                     ? task.dueDate.toDate()
                     : task.dueDate
                 );
-                // Show "Completed" if task is completed
-                let timerDisplay = "";
-                if (task.status === "completed") {
-                  timerDisplay = "Completed";
-                } else {
-                  // Only display the largest non-zero unit
-                  const match = timeLeftObj.text.match(/(\d+y)|(\d+mo)|(\d+d)|(\d+h)|(\d+m)|(\d+s)/g);
-                  timerDisplay = match && match.length > 0 ? match[0].trim() : timeLeftObj.text;
-                  if (timeLeftObj.overdue) timerDisplay = "Overdue";
-                }
+                const timerDisplay =
+                  task.status === "completed"
+                    ? "Completed"
+                    : timeLeftObj.text;
 
                 return (
                   <div
@@ -782,10 +765,6 @@ const FcTodoList: React.FC = () => {
                               e.stopPropagation();
                               handleMarkAsCompleted(task.id);
                             }}
-                            disabled={
-                              task.checklist.length > 0 &&
-                              !task.checklist.every((item) => item.checked)
-                            }
                           >
                             Complete
                           </Button>
@@ -811,7 +790,6 @@ const FcTodoList: React.FC = () => {
           <div className="CardTask">
             {tasks
               .filter((task) => {
-                // Pending: not completed, dueDate >= now
                 const due =
                   task.dueDate instanceof Timestamp
                     ? task.dueDate.toDate()
