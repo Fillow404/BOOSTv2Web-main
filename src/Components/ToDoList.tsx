@@ -233,7 +233,7 @@ const FcTodoList: React.FC = () => {
         ...newTask,
         id: uuidv4(),
         createdAt: serverTimestamp(),
-        timeLeft: calculateTimeLeft(newTask.dueDate),
+        timeLeft: calculateTimeLeft(newTask.dueDate).text, // fix: use .text property
         userId: user.uid,
         status: "pending",
         completedTime: null,
@@ -324,22 +324,41 @@ const FcTodoList: React.FC = () => {
     });
   };
 
-  const calculateTimeLeft = (dueDate: Date | null): string => {
-    if (!dueDate) return "";
+  const calculateTimeLeft = (dueDate: Date | null): { text: string; overdue: boolean } => {
+    if (!dueDate) return { text: "", overdue: false };
     const now = new Date();
-    const diff = dueDate.getTime() - now.getTime();
-    if (diff < 0) return "Overdue";
+    let diff = dueDate.getTime() - now.getTime();
+    let overdue = false;
+    if (diff < 0) {
+      overdue = true;
+      diff = Math.abs(diff);
+    }
 
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    let seconds = Math.floor(diff / 1000);
+    const years = Math.floor(seconds / (365 * 24 * 60 * 60));
+    seconds -= years * 365 * 24 * 60 * 60;
+    const months = Math.floor(seconds / (30 * 24 * 60 * 60));
+    seconds -= months * 30 * 24 * 60 * 60;
+    const days = Math.floor(seconds / (24 * 60 * 60));
+    seconds -= days * 24 * 60 * 60;
+    const hours = Math.floor(seconds / (60 * 60));
+    seconds -= hours * 60 * 60;
+    const minutes = Math.floor(seconds / 60);
+    seconds -= minutes * 60;
 
+    // Only display the largest non-zero unit
     let timeLeftString = "";
-    if (days > 0) timeLeftString += `${days}d `;
-    if (hours > 0) timeLeftString += `${hours}h `;
-    timeLeftString += `${minutes}m`;
-    return timeLeftString;
+    if (years > 0) timeLeftString = `${years}y`;
+    else if (months > 0) timeLeftString = `${months}mo`;
+    else if (days > 0) timeLeftString = `${days}d`;
+    else if (hours > 0) timeLeftString = `${hours}h`;
+    else if (minutes > 0) timeLeftString = `${minutes}m`;
+    else timeLeftString = `${seconds}s`;
+
+    if (overdue) return { text: "Overdue", overdue: true };
+    return { text: timeLeftString, overdue: false };
   };
+
   const motivationalMessages = [
     "Take one step today toward your goal — even a small one matters.",
     "Keep pushing forward — your effort is building progress.",
@@ -370,6 +389,21 @@ const FcTodoList: React.FC = () => {
 
   const renderTaskCard = (task: Task) => {
     const isClickable = task.checklist && task.checklist.length > 0;
+    const timeLeftObj = calculateTimeLeft(
+      task.dueDate instanceof Timestamp
+        ? task.dueDate.toDate()
+        : task.dueDate
+    );
+    // Show "Completed" if task is completed
+    let timerDisplay = "";
+    if (task.status === "completed") {
+      timerDisplay = "Completed";
+    } else {
+      // Only display the largest non-zero unit
+      const match = timeLeftObj.text.match(/(\d+y)|(\d+mo)|(\d+d)|(\d+h)|(\d+m)|(\d+s)/g);
+      timerDisplay = match && match.length > 0 ? match[0].trim() : timeLeftObj.text;
+      if (timeLeftObj.overdue) timerDisplay = "Overdue";
+    }
 
     return (
       <div
@@ -380,8 +414,17 @@ const FcTodoList: React.FC = () => {
       >
         <div className="card p-3 task-card-responsive taskCard">
           <div className="d-flex align-items-center  justify-content-between">
-            <span className="badge text-light bg-success mr-auto ">
-              {task.timeLeft}
+            <span
+              className="badge text-light bg-success mr-auto "
+              style={
+                task.status === "completed"
+                  ? { backgroundColor: "#60BF9D" }
+                  : timeLeftObj.overdue
+                  ? { backgroundColor: "red" }
+                  : {}
+              }
+            >
+              {timerDisplay}
             </span>
             <div>
               {task.status !== "completed" && (
@@ -445,7 +488,7 @@ const FcTodoList: React.FC = () => {
             </div>
           </div>
           <div className="mt-3 d-flex gap-2">
-            {task.status === "pending" && (
+            {task.status === "pending" && !timeLeftObj.overdue && (
               <Button
                 variant="success"
                 size="sm"
@@ -457,7 +500,7 @@ const FcTodoList: React.FC = () => {
                 Working On
               </Button>
             )}
-            {task.status === "onProgress" && (
+            {task.status === "onProgress" && !timeLeftObj.overdue && (
               <Button
                 variant="success"
                 size="sm"
@@ -465,6 +508,10 @@ const FcTodoList: React.FC = () => {
                   e.stopPropagation();
                   handleMarkAsCompleted(task.id);
                 }}
+                disabled={
+                  task.checklist.length > 0 &&
+                  !task.checklist.every((item) => item.checked)
+                }
               >
                 Complete
               </Button>
@@ -556,18 +603,198 @@ const FcTodoList: React.FC = () => {
         <div className="task-column">
           <span className="icons col-sm-auto">
             <svg height={13} width={10}>
-              <circle fill="blue" cx={5} cy={5} r={5} />
+              <circle fill="red" cx={5} cy={5} r={5} />
             </svg>
           </span>
-          <span className="ps-2 fw-medium text col-sm-auto">On Progress</span>
+          <span className="ps-2 fw-medium text col-sm-auto">Overdue</span>
 
           <svg height="2%" width="100%" className="mb-4 mt-2">
             <line x1="0" y1="10" x2="100%" y2="10" id="custom-line1" />
           </svg>
           <div className="CardTask">
             {tasks
-              .filter((task) => task.status === "onProgress")
-              .map(renderTaskCard)}
+              .filter((task) => {
+                // Overdue: not completed, dueDate < now
+                const due =
+                  task.dueDate instanceof Timestamp
+                    ? task.dueDate.toDate()
+                    : task.dueDate;
+                return (
+                  task.status !== "completed" &&
+                  due &&
+                  due < new Date()
+                );
+              })
+              .filter((task) => task.status === "pending" || task.status === "onProgress")
+              .map((task) => {
+                // Deduct 100 exp if task is overdue and not yet deducted
+                const due =
+                  task.dueDate instanceof Timestamp
+                    ? task.dueDate.toDate()
+                    : task.dueDate;
+                const isOverdue =
+                  task.status !== "completed" &&
+                  due &&
+                  due < new Date();
+
+                // Use a flag in task to avoid multiple deductions (optional, for idempotency)
+                if (isOverdue && user && !(task as any).expDeducted) {
+                  // Fire and forget, do not await in render
+                  (async () => {
+                    try {
+                      const userRef = doc(db, "users", user.uid);
+                      const userDoc = await getDoc(userRef);
+                      if (userDoc.exists()) {
+                        const currentExp = userDoc.data().exp || 0;
+                        const newExp = Math.max(0, currentExp - 100);
+                        await updateDoc(userRef, { exp: newExp });
+                      }
+                      // Mark this task as expDeducted to avoid repeated deduction
+                      const taskRef = doc(db, "users", user.uid, "todolist", task.id);
+                      await updateDoc(taskRef, { expDeducted: true });
+                      setTasks((prevTasks) =>
+                        prevTasks.map((t) =>
+                          t.id === task.id ? { ...t, expDeducted: true } : t
+                        )
+                      );
+                    } catch (error) {
+                      // Optionally handle error
+                    }
+                  })();
+                }
+
+                const isClickable = task.checklist && task.checklist.length > 0;
+                const timeLeftObj = calculateTimeLeft(
+                  task.dueDate instanceof Timestamp
+                    ? task.dueDate.toDate()
+                    : task.dueDate
+                );
+                // Show "Completed" if task is completed
+                let timerDisplay = "";
+                if (task.status === "completed") {
+                  timerDisplay = "Completed";
+                } else {
+                  // Only display the largest non-zero unit
+                  const match = timeLeftObj.text.match(/(\d+y)|(\d+mo)|(\d+d)|(\d+h)|(\d+m)|(\d+s)/g);
+                  timerDisplay = match && match.length > 0 ? match[0].trim() : timeLeftObj.text;
+                  if (timeLeftObj.overdue) timerDisplay = "Overdue";
+                }
+
+                return (
+                  <div
+                    className="pb-3"
+                    key={task.id}
+                    onClick={isClickable ? () => handleTaskClick(task) : undefined}
+                    style={{ cursor: isClickable ? "pointer" : "default" }}
+                  >
+                    <div className="card p-3 task-card-responsive taskCard">
+                      <div className="d-flex align-items-center  justify-content-between">
+                        <span
+                          className="badge text-light bg-success mr-auto "
+                          style={
+                            task.status === "completed"
+                              ? { backgroundColor: "#60BF9D" }
+                              : timeLeftObj.overdue
+                              ? { backgroundColor: "red" }
+                              : {}
+                          }
+                        >
+                          {timerDisplay}
+                        </span>
+                        <div>
+                          {task.status !== "completed" && (
+                            <FaEdit
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEditTaskShow(task);
+                              }}
+                              size={22}
+                              style={{ cursor: "pointer", marginRight: "10px" }}
+                            />
+                          )}
+                          <MdDelete
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteTask(task.id);
+                            }}
+                            size={22}
+                            style={{ cursor: "pointer" }}
+                          />
+                        </div>
+                      </div>
+                      <h5 className="mt-2">{task.title}</h5>
+                      <p className="text-muted">{task.description}</p>
+                      <p
+                        className={`badge badge-success text-light text-start rounded border text-center  ${
+                          task.priority === "Low" ? "col-md-2" : "col-md-3"
+                        } ${task.priority === "Low" ? "ps-1" : "ps-2"}`}
+                        style={{ backgroundColor: "#60BF9D" }}
+                      >
+                        {task.priority}
+                      </p>
+                      <div>
+                        {task.tags.map((tag, index) => (
+                          <span key={index} className="badge bg-secondary me-1">
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                      <div className="d-flex justify-content-between align-items-center mt-3 p-2 bg-light rounded">
+                        <div className="d-flex align-items-center ">
+                          <span>
+                            <FaCalendarAlt
+                              size={25}
+                              className="me-1 p-1 rounded border shadow"
+                              color="blue"
+                              style={{ borderColor: "gray" }}
+                            />
+                            {formatDate(task.dueDate)}
+                          </span>
+                        </div>
+                        <div className="d-flex align-items-center ">
+                          <AlarmClock
+                            size={25}
+                            className="me-1 p-1 rounded-circle border shadow"
+                            color="orange"
+                            style={{ borderColor: "gray" }}
+                          />
+                          {formatTime(task.dueDate)}
+                        </div>
+                      </div>
+                      <div className="mt-3 d-flex gap-2">
+                        {task.status === "pending" && !timeLeftObj.overdue && (
+                          <Button
+                            variant="success"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleMoveToOnProgress(task.id);
+                            }}
+                          >
+                            Working On
+                          </Button>
+                        )}
+                        {task.status === "onProgress" && !timeLeftObj.overdue && (
+                          <Button
+                            variant="success"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleMarkAsCompleted(task.id);
+                            }}
+                            disabled={
+                              task.checklist.length > 0 &&
+                              !task.checklist.every((item) => item.checked)
+                            }
+                          >
+                            Complete
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
           </div>
         </div>
         <div className="task-column">
@@ -583,8 +810,116 @@ const FcTodoList: React.FC = () => {
           </svg>
           <div className="CardTask">
             {tasks
-              .filter((task) => task.status === "pending")
-              .map(renderTaskCard)}
+              .filter((task) => {
+                // Pending: not completed, dueDate >= now
+                const due =
+                  task.dueDate instanceof Timestamp
+                    ? task.dueDate.toDate()
+                    : task.dueDate;
+                return (
+                  task.status === "pending" &&
+                  due &&
+                  due >= new Date()
+                );
+              })
+              .map((task) => {
+                const isClickable = task.checklist && task.checklist.length > 0;
+                const timeLeftObj = calculateTimeLeft(
+                  task.dueDate instanceof Timestamp
+                    ? task.dueDate.toDate()
+                    : task.dueDate
+                );
+                return (
+                  <div
+                    className="pb-3"
+                    key={task.id}
+                    onClick={isClickable ? () => handleTaskClick(task) : undefined}
+                    style={{ cursor: isClickable ? "pointer" : "default" }}
+                  >
+                    <div className="card p-3 task-card-responsive taskCard">
+                      <div className="d-flex align-items-center  justify-content-between">
+                        <span
+                          className="badge text-light bg-success mr-auto "
+                          style={timeLeftObj.overdue ? { backgroundColor: "red" } : {}}
+                        >
+                          {timeLeftObj.text}
+                        </span>
+                        <div>
+                          {task.status !== "completed" && (
+                            <FaEdit
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEditTaskShow(task);
+                              }}
+                              size={22}
+                              style={{ cursor: "pointer", marginRight: "10px" }}
+                            />
+                          )}
+                          <MdDelete
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteTask(task.id);
+                            }}
+                            size={22}
+                            style={{ cursor: "pointer" }}
+                          />
+                        </div>
+                      </div>
+                      <h5 className="mt-2">{task.title}</h5>
+                      <p className="text-muted">{task.description}</p>
+                      <p
+                        className={`badge badge-success text-light text-start rounded border text-center  ${
+                          task.priority === "Low" ? "col-md-2" : "col-md-3"
+                        } ${task.priority === "Low" ? "ps-1" : "ps-2"}`}
+                        style={{ backgroundColor: "#60BF9D" }}
+                      >
+                        {task.priority}
+                      </p>
+                      <div>
+                        {task.tags.map((tag, index) => (
+                          <span key={index} className="badge bg-secondary me-1">
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                      <div className="d-flex justify-content-between align-items-center mt-3 p-2 bg-light rounded">
+                        <div className="d-flex align-items-center ">
+                          <span>
+                            <FaCalendarAlt
+                              size={25}
+                              className="me-1 p-1 rounded border shadow"
+                              color="blue"
+                              style={{ borderColor: "gray" }}
+                            />
+                            {formatDate(task.dueDate)}
+                          </span>
+                        </div>
+                        <div className="d-flex align-items-center ">
+                          <AlarmClock
+                            size={25}
+                            className="me-1 p-1 rounded-circle border shadow"
+                            color="orange"
+                            style={{ borderColor: "gray" }}
+                          />
+                          {formatTime(task.dueDate)}
+                        </div>
+                      </div>
+                      <div className="mt-3 d-flex gap-2">
+                        <Button
+                          variant="success"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleMarkAsCompleted(task.id);
+                          }}
+                        >
+                          Complete
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
           </div>
         </div>
         <div className="task-column">
