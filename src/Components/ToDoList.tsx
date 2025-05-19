@@ -324,14 +324,6 @@ const FcTodoList: React.FC = () => {
     });
   };
 
-  const [timerTick, setTimerTick] = useState(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setTimerTick((tick) => tick + 1);
-    }, 1000);
-    return () => clearInterval(interval);
-  }, []);
 
   const calculateTimeLeft = (dueDate: Date | null): { text: string; overdue: boolean } => {
     if (!dueDate) return { text: "", overdue: false };
