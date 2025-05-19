@@ -274,7 +274,7 @@ const Signup: React.FC = () => {
             </motion.button>
           </motion.div>
 
-          <motion.label className="p-2" style={{ color: "white" }}>
+          <motion.label className="p-2" style={{ color: "black" }}>
             <input
               type="checkbox"
               checked={termsChecked}

@@ -103,7 +103,7 @@ function Login() {
         transition={{ duration: 0.8 }}
       >
         <motion.div
-          className="col-md-auto card mt-5 mb-5 p-5"
+          className="col-md-auto card mt-5 mb-5 p-5 bg-light"
           id="card-bg"
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
