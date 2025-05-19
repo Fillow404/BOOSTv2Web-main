@@ -324,6 +324,14 @@ const FcTodoList: React.FC = () => {
     });
   };
 
+  const [timerTick, setTimerTick] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTimerTick((tick) => tick + 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   const calculateTimeLeft = (dueDate: Date | null): { text: string; overdue: boolean } => {
     if (!dueDate) return { text: "", overdue: false };
@@ -347,13 +355,14 @@ const FcTodoList: React.FC = () => {
     const minutes = Math.floor(seconds / 60);
     seconds -= minutes * 60;
 
+    // Only display the largest non-zero unit
     let timeLeftString = "";
-    if (years > 0) timeLeftString += `${years}y `;
-    if (months > 0) timeLeftString += `${months}mo `;
-    if (days > 0) timeLeftString += `${days}d `;
-    if (hours > 0) timeLeftString += `${hours}h `;
-    if (minutes > 0) timeLeftString += `${minutes}m `;
-    timeLeftString += `${seconds}s`;
+    if (years > 0) timeLeftString = `${years}y`;
+    else if (months > 0) timeLeftString = `${months}mo`;
+    else if (days > 0) timeLeftString = `${days}d`;
+    else if (hours > 0) timeLeftString = `${hours}h`;
+    else if (minutes > 0) timeLeftString = `${minutes}m`;
+    else timeLeftString = `${seconds}s`;
 
     if (overdue) return { text: "Overdue", overdue: true };
     return { text: timeLeftString, overdue: false };
@@ -388,6 +397,9 @@ const FcTodoList: React.FC = () => {
     ];
 
   const renderTaskCard = (task: Task) => {
+    // Add timerTick as a dependency to force re-render every second
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const _ = timerTick;
     const isClickable = task.checklist && task.checklist.length > 0;
     const timeLeftObj = calculateTimeLeft(
       task.dueDate instanceof Timestamp
@@ -586,19 +598,28 @@ const FcTodoList: React.FC = () => {
         {randomMessage}
       </p>
 
-      <div className="board-container flex gap-4">
-        <div className="task-column">
+      <div
+        className="board-container flex gap-4"
+        style={{
+          overflowX: "auto",
+          overflowY: "hidden",
+          whiteSpace: "nowrap",
+          minWidth: "100vw",
+          width: "max-content",
+        }}
+      >
+        {/* Overdue Column */}
+        <div className="task-column" style={{ display: "inline-block", verticalAlign: "top", minWidth: 340 }}>
           <span className="icons col-sm-auto">
             <svg height={13} width={10}>
               <circle fill="red" cx={5} cy={5} r={5} />
             </svg>
           </span>
           <span className="ps-2 fw-medium text col-sm-auto">Overdue</span>
-
           <svg height="2%" width="100%" className="mb-4 mt-2">
             <line x1="0" y1="10" x2="100%" y2="10" id="custom-line1" />
           </svg>
-          <div className="CardTask">
+          <div className="CardTask" style={{ maxHeight: "60vh", overflowY: "auto" }}>
             {tasks
               .filter((task) => {
                 const due =
@@ -768,18 +789,38 @@ const FcTodoList: React.FC = () => {
               })}
           </div>
         </div>
-        <div className="task-column">
+
+        {/* --- NEW COLUMN: In Review --- */}
+        <div className="task-column" style={{ display: "inline-block", verticalAlign: "top", minWidth: 340 }}>
+          <span className="icons col-sm-auto">
+            <svg height={13} width={10}>
+              <circle fill="#6c63ff" cx={5} cy={5} r={5} />
+            </svg>
+          </span>
+          <span className="ps-2 fw-medium text col-sm-auto">In Review</span>
+          <svg height="2%" width="100%" className="mb-4 mt-2">
+            <line x1="0" y1="10" x2="100%" y2="10" id="custom-line-review" />
+          </svg>
+          <div className="CardTask" style={{ maxHeight: "60vh", overflowY: "auto" }}>
+            {tasks
+              .filter((task) => task.status === "review")
+              .map(renderTaskCard)}
+          </div>
+        </div>
+        {/* --- END NEW COLUMN --- */}
+
+        {/* Pending Column */}
+        <div className="task-column" style={{ display: "inline-block", verticalAlign: "top", minWidth: 340 }}>
           <span className="icons col-sm-auto">
             <svg height={13} width={10}>
               <circle fill="yellow" cx={5} cy={5} r={5} />
             </svg>
           </span>
           <span className="ps-2 fw-medium text col-sm-auto">Pending</span>
-
           <svg height="2%" width="100%" className="mb-4 mt-2">
             <line x1="0" y1="10" x2="100%" y2="10" id="custom-line2" />
           </svg>
-          <div className="CardTask">
+          <div className="CardTask" style={{ maxHeight: "60vh", overflowY: "auto" }}>
             {tasks
               .filter((task) => {
                 const due =
@@ -892,7 +933,8 @@ const FcTodoList: React.FC = () => {
               })}
           </div>
         </div>
-        <div className="task-column">
+        {/* Completed Column */}
+        <div className="task-column" style={{ display: "inline-block", verticalAlign: "top", minWidth: 340 }}>
           <div className="row">
             <span className="icons col-sm-auto">
               <svg height={13} width={10}>
@@ -904,7 +946,7 @@ const FcTodoList: React.FC = () => {
           <svg height="2%" width="100%" className="mb-4 mt-2">
             <line x1="0" y1="10" x2="100%" y2="10" id="custom-line3" />
           </svg>
-          <div className="CardTask">
+          <div className="CardTask" style={{ maxHeight: "60vh", overflowY: "auto" }}>
             {tasks
               .filter((task) => task.status === "completed")
               .map(renderTaskCard)}
