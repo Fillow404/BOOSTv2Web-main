@@ -15,6 +15,11 @@
   stroke-width: 5
 }
 
+#custom-line4 {
+  stroke: blue;
+  stroke-width: 5
+}
+
 .task-card {
   background-color: #fff;
   padding: 15px;

@@ -14,7 +14,7 @@ import { format } from "date-fns";
 
 interface FlashcardQnAProps {
   deckTitle: string;
-  cards: { id: string; question: string; answer: string }[];
+  cards: { id: string; question: string; answer: string; image?: string }[];
   onExit: () => void;
 }
 
@@ -28,6 +28,7 @@ export default function FlashcardQnA({
     id: string;
     question: string;
     answer: string;
+    image?: string;
   } | null>(null);
   const [choices, setChoices] = useState<string[]>([]);
   const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
@@ -219,19 +220,35 @@ export default function FlashcardQnA({
             className="card mt-4 text-center p-3 position-relative overflow-hidden"
           >
             <div className="card-body">
+              {currentQuestion.image && (
+                <img
+                  src={currentQuestion.image}
+                  alt="Question"
+                  style={{
+                    maxWidth: "100%",
+                    maxHeight: 240,
+                    width: "auto",
+                    height: "auto",
+                    marginBottom: 12,
+                    objectFit: "contain",
+                    display: "block",
+                    marginLeft: "auto",
+                    marginRight: "auto",
+                  }}
+                />
+              )}
               <h5 className="mb-3">{currentQuestion.question}</h5>
               <span className="fw-bold">Time Left: {timeLeft}s</span>
             </div>
-
             <div
               style={{
                 position: "absolute",
                 bottom: 0,
                 left: 0,
                 height: "6px",
-                width: `${(timeLeft / 15) * 100}%`, // dynamic width based on time
+                width: `${(timeLeft / 15) * 100}%`,
                 backgroundColor: "#ffc107",
-                transition: "width 1s linear", // smooth shrinking
+                transition: "width 1s linear",
               }}
             />
           </div>

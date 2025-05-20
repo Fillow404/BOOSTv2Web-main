@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { Button, Modal } from "react-bootstrap";
 import { FaEdit } from "react-icons/fa";
 import { MdDeleteForever } from "react-icons/md";

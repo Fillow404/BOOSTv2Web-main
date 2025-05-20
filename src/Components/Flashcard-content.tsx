@@ -42,7 +42,9 @@ export default function FlashcardContent({
   const [showEditModal, setShowEditModal] = useState(false);
   const [newQuestion, setNewQuestion] = useState("");
   const [newAnswer, setNewAnswer] = useState("");
+  const [newImage, setNewImage] = useState<string | null>(null);
   const [editIndex, setEditIndex] = useState<number | null>(null);
+  const [editImage, setEditImage] = useState<string | null>(null);
   const [isStarting, setIsStarting] = useState(false);
 
   const user = auth.currentUser;
@@ -82,12 +84,14 @@ export default function FlashcardContent({
     )
       return;
 
-    const newCard = { question: newQuestion, answer: newAnswer };
+    const newCard: any = { question: newQuestion, answer: newAnswer };
+    if (newImage) newCard.image = newImage;
     try {
       const docRef = await addDoc(cardsCollection, newCard);
       setCards([...cards, { id: docRef.id, ...newCard }]);
       setNewQuestion("");
       setNewAnswer("");
+      setNewImage(null);
       setShowCreateModal(false);
     } catch (error) {
       console.error("Error adding card:", error);
@@ -98,6 +102,7 @@ export default function FlashcardContent({
     setEditIndex(index);
     setNewQuestion(cards[index].question);
     setNewAnswer(cards[index].answer);
+    setEditImage((cards[index] as any).image || null);
     setShowEditModal(true);
   };
 
@@ -117,13 +122,14 @@ export default function FlashcardContent({
       cardId
     );
     try {
-      await updateDoc(cardRef, { question: newQuestion, answer: newAnswer });
+      await updateDoc(cardRef, { question: newQuestion, answer: newAnswer, image: editImage || "" });
 
       const updatedCards = [...cards];
       updatedCards[editIndex] = {
         id: cardId,
         question: newQuestion,
         answer: newAnswer,
+        ...(editImage ? { image: editImage } : {}),
       };
       setCards(updatedCards);
       setEditIndex(null);
@@ -222,6 +228,15 @@ export default function FlashcardContent({
                       <strong>Question:</strong>
                     </p>
                     <span>{card.question}</span>
+                    {(card as any).image && (
+                      <div style={{ marginTop: 8 }}>
+                        <img
+                          src={(card as any).image}
+                          alt="Question"
+                          style={{ maxWidth: 200, maxHeight: 120, display: "block" }}
+                        />
+                      </div>
+                    )}
                   </div>
                   <div className=" col-md-auto Answer">
                     <p>
@@ -263,6 +278,7 @@ export default function FlashcardContent({
               setShowCreateModal(false);
               setNewQuestion("");
               setNewAnswer("");
+              setNewImage(null);
             }}
             centered
           >
@@ -281,9 +297,36 @@ export default function FlashcardContent({
                       placeholder="Enter question"
                       value={newQuestion}
                       onChange={(e) => setNewQuestion(e.target.value)}
-                      style={{ resize: "both", minHeight: "80px" }} // allow resizing both directions
+                      style={{ resize: "both", minHeight: "80px" }}
                     />
                   </div>
+                </Form.Group>
+                <Form.Group className="mb-3">
+                  <Form.Label>Image (optional)</Form.Label>
+                  <Form.Control
+                    type="file"
+                    accept="image/*"
+                    onChange={e => {
+                      const input = e.target as HTMLInputElement;
+                      const file = input.files?.[0];
+                      if (!file) {
+                        setNewImage(null);
+                        return;
+                      }
+                      const reader = new FileReader();
+                      reader.onload = ev => {
+                        setNewImage(ev.target?.result as string);
+                      };
+                      reader.readAsDataURL(file);
+                    }}
+                  />
+                  {newImage && (
+                    <img
+                      src={newImage}
+                      alt="Preview"
+                      style={{ maxWidth: 200, maxHeight: 120, marginTop: 8 }}
+                    />
+                  )}
                 </Form.Group>
                 <Form.Group className="mt-3">
                   <div className="d-flex">
@@ -319,6 +362,7 @@ export default function FlashcardContent({
               setNewQuestion("");
               setNewAnswer("");
               setEditIndex(null);
+              setEditImage(null);
             }}
             centered
           >
@@ -334,6 +378,33 @@ export default function FlashcardContent({
                     value={newQuestion}
                     onChange={(e) => setNewQuestion(e.target.value)}
                   />
+                </Form.Group>
+                <Form.Group className="mt-3">
+                  <Form.Label>Image (optional)</Form.Label>
+                  <Form.Control
+                    type="file"
+                    onChange={e => {
+                      const input = e.target as HTMLInputElement;
+                      const file = input.files?.[0];
+                      if (!file) {
+                        setEditImage(null);
+                        return;
+                      }
+                      const reader = new FileReader();
+                      reader.onload = ev => {
+                        setEditImage(ev.target?.result as string);
+                      };
+                      reader.readAsDataURL(file);
+                    }}
+                    
+                  />
+                  {editImage && (
+                    <img
+                      src={editImage}
+                      alt="Preview"
+                      style={{ maxWidth: 200, maxHeight: 120, marginTop: 8 }}
+                    />
+                  )}
                 </Form.Group>
                 <Form.Group className="mt-3">
                   <Form.Label>Answer</Form.Label>

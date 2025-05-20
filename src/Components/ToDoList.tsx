@@ -324,14 +324,6 @@ const FcTodoList: React.FC = () => {
     });
   };
 
-  const [timerTick, setTimerTick] = useState(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setTimerTick((tick) => tick + 1);
-    }, 1000);
-    return () => clearInterval(interval);
-  }, []);
 
   const calculateTimeLeft = (dueDate: Date | null): { text: string; overdue: boolean } => {
     if (!dueDate) return { text: "", overdue: false };
@@ -355,7 +347,6 @@ const FcTodoList: React.FC = () => {
     const minutes = Math.floor(seconds / 60);
     seconds -= minutes * 60;
 
-    // Only display the largest non-zero unit
     let timeLeftString = "";
     if (years > 0) timeLeftString = `${years}y`;
     else if (months > 0) timeLeftString = `${months}mo`;
@@ -391,15 +382,20 @@ const FcTodoList: React.FC = () => {
     "Visualize the result and take the next right step toward it.",
   ];
 
-  const randomMessage =
-    motivationalMessages[
-      Math.floor(Math.random() * motivationalMessages.length)
-    ];
+  const [messageIndex, setMessageIndex] = useState(() =>
+    Math.floor(Math.random() * motivationalMessages.length)
+  );
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setMessageIndex((prev) => (prev + 1) % motivationalMessages.length);
+    }, 60000);
+    return () => clearInterval(interval);
+  }, [motivationalMessages.length]);
+
+  const randomMessage = motivationalMessages[messageIndex];
 
   const renderTaskCard = (task: Task) => {
-    // Add timerTick as a dependency to force re-render every second
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const _ = timerTick;
     const isClickable = task.checklist && task.checklist.length > 0;
     const timeLeftObj = calculateTimeLeft(
       task.dueDate instanceof Timestamp
@@ -608,14 +604,15 @@ const FcTodoList: React.FC = () => {
           width: "max-content",
         }}
       >
-        {/* Overdue Column */}
         <div className="task-column" style={{ display: "inline-block", verticalAlign: "top", minWidth: 340 }}>
-          <span className="icons col-sm-auto">
-            <svg height={13} width={10}>
-              <circle fill="red" cx={5} cy={5} r={5} />
-            </svg>
-          </span>
-          <span className="ps-2 fw-medium text col-sm-auto">Overdue</span>
+         <div className="row">
+            <span className="icons col-sm-auto">
+              <svg height={13} width={10}>
+                <circle fill="Red" cx={5} cy={5} r={5} />
+              </svg>
+            </span>
+            <span className="ps-2 fw-medium text col-sm-auto">Overdue</span>
+          </div>
           <svg height="2%" width="100%" className="mb-4 mt-2">
             <line x1="0" y1="10" x2="100%" y2="10" id="custom-line1" />
           </svg>
@@ -790,33 +787,34 @@ const FcTodoList: React.FC = () => {
           </div>
         </div>
 
-        {/* --- NEW COLUMN: In Review --- */}
         <div className="task-column" style={{ display: "inline-block", verticalAlign: "top", minWidth: 340 }}>
-          <span className="icons col-sm-auto">
-            <svg height={13} width={10}>
-              <circle fill="#6c63ff" cx={5} cy={5} r={5} />
-            </svg>
-          </span>
-          <span className="ps-2 fw-medium text col-sm-auto">In Review</span>
+          <div className="row">
+            <span className="icons col-sm-auto">
+              <svg height={13} width={10}>
+                <circle fill="yellow" cx={5} cy={5} r={5} />
+              </svg>
+            </span>
+            <span className="ps-2 fw-medium text col-sm-auto">Pending</span>
+          </div>
           <svg height="2%" width="100%" className="mb-4 mt-2">
-            <line x1="0" y1="10" x2="100%" y2="10" id="custom-line-review" />
+            <line x1="0" y1="10" x2="100%" y2="10" id="custom-line2" />
           </svg>
           <div className="CardTask" style={{ maxHeight: "60vh", overflowY: "auto" }}>
             {tasks
-              .filter((task) => task.status === "review")
+              .filter((task) => task.status === "onProgress")
               .map(renderTaskCard)}
           </div>
         </div>
-        {/* --- END NEW COLUMN --- */}
 
-        {/* Pending Column */}
         <div className="task-column" style={{ display: "inline-block", verticalAlign: "top", minWidth: 340 }}>
-          <span className="icons col-sm-auto">
-            <svg height={13} width={10}>
-              <circle fill="yellow" cx={5} cy={5} r={5} />
-            </svg>
-          </span>
-          <span className="ps-2 fw-medium text col-sm-auto">Pending</span>
+         <div className="row">
+            <span className="icons col-sm-auto">
+              <svg height={13} width={10}>
+                <circle fill="yellow" cx={5} cy={5} r={5} />
+              </svg>
+            </span>
+            <span className="ps-2 fw-medium text col-sm-auto">Pending</span>
+          </div>
           <svg height="2%" width="100%" className="mb-4 mt-2">
             <line x1="0" y1="10" x2="100%" y2="10" id="custom-line2" />
           </svg>
@@ -933,7 +931,6 @@ const FcTodoList: React.FC = () => {
               })}
           </div>
         </div>
-        {/* Completed Column */}
         <div className="task-column" style={{ display: "inline-block", verticalAlign: "top", minWidth: 340 }}>
           <div className="row">
             <span className="icons col-sm-auto">
@@ -1024,7 +1021,6 @@ const FcTodoList: React.FC = () => {
               </div>
             </Form.Group>
 
-            {/* Task Tags */}
             <Form.Group className="mb-3">
               <div className="d-flex">
                 <Form.Label htmlFor="taskTags" className="mt-3 pe-3">
@@ -1041,7 +1037,6 @@ const FcTodoList: React.FC = () => {
               </div>
             </Form.Group>
 
-            {/* Task Due Date */}
             <Form.Group className="mb-3">
               <div className="d-flex">
                 <Form.Label htmlFor="taskDueDate" className="mt-3 pe-3">
@@ -1071,7 +1066,6 @@ const FcTodoList: React.FC = () => {
               </div>
             </Form.Group>
 
-            {/* Task Priority */}
             <Form.Group className="mb-3">
               <div className="d-flex">
                 <Form.Label className="mt-3 pe-3">Priority:</Form.Label>
@@ -1092,7 +1086,6 @@ const FcTodoList: React.FC = () => {
               </div>
             </Form.Group>
 
-            {/* Task Checklist */}
             <Form.Group className="mb-3">
               <Form.Label className="fw-bold fs-5">Checklist</Form.Label>
               <DragDropContext
@@ -1213,7 +1206,6 @@ const FcTodoList: React.FC = () => {
         </Modal.Header>
         <Modal.Body>
           <div className="d-flex flex-column">
-            {/* Displaying the task description */}
             {selectedTask?.description && (
               <div className="mb-4">
                 <p className="text-muted text-start">
@@ -1222,7 +1214,6 @@ const FcTodoList: React.FC = () => {
               </div>
             )}
 
-            {/* Checklist with drag-and-drop */}
             {selectedTask?.checklist.length ? (
               <DragDropContext onDragEnd={handleDragEnd}>
                 <Droppable droppableId="checklist" type="list">
